@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건설 업무 대시보드</title>
+    <style>
+        /* 기본 스타일 설정 */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 1.8rem;
+        }
+
+        /* 그리드 레이아웃: 2개씩 배치 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* 카드(네모칸) 스타일 */
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid transparent;
+            min-height: 120px;
+        }
+
+        /* 마우스 올렸을 때 효과 */
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.15);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        /* 모바일 대응: 작은 화면에서는 1열로 */
+        @media (max-width: 600px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 1.4rem;
+            }
+        }
+
+        /* 작성중 항목 강조 (회색조) */
+        .draft {
+            background-color: #fafafa;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>건설 업무 관리 시스템</h1>
+    
+    <div class="dashboard-grid">
+        <!-- 일용직노무대장관리프로그램 -->
+        <a href="https://gemini.google.com/share/14617db5e64a" target="_blank" class="card">
+            일용직노무대장관리프로그램
+        </a>
+
+        <!-- 건설공정표 -->
+        <a href="https://gemini.google.com/share/c748695acbfa" target="_blank" class="card">
+            건설공정표
+        </a>
+
+        <!-- 강재산출서 -->
+        <a href="https://gemini.google.com/share/890ee0942ab1" target="_blank" class="card">
+            강재산출서
+        </a>
+
+        <!-- 건설ERP초안(작성중) -->
+        <a href="https://gemini.google.com/share/a52a94f7f886" target="_blank" class="card draft">
+            건설ERP초안(작성중)
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
