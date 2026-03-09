@@ -371,7 +371,6 @@
                 sel.innerHTML = sizeOptions;
                 sel.value = 'HD13'; 
             });
-            document.getElementById('slab-x1-size').value = 'HD16';
         }
 
         // --- JSON Export / Import ---
@@ -535,10 +534,16 @@
                     let singleLen = lengthDir + (spliceCount * spliceLen) + (hookLen * 2);
                     let weight = (singleLen / 1000) * count * REBAR_DATA[size].weight * lossRebar;
                     
+                    // 삼각형일 경우에만 철근 중량 절반(0.5) 적용
+                    let isTri = (shape === 'tri');
+                    if (isTri) {
+                        weight = weight * 0.5;
+                    }
+                    
                     const key = `${size}(${grade})`;
                     rebarDict[key] = (rebarDict[key] || 0) + weight;
                     rebarDetails.push(`[${label}] 정착(${isTop?'상':'하'}): ${ld}mm, 이음: ${spliceLen}mm(${spliceCount}회), 갈고리: ${hookLen}mm(x2)`);
-                    rebarFormulas.push(`[${label}] ${key}:\n(기본 ${lengthDir} + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*2}) / 1000 \n= ${singleLen/1000}m * ${count}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
+                    rebarFormulas.push(`[${label}] ${key}:\n(기본 ${lengthDir} + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*2}) / 1000 \n= ${singleLen/1000}m * ${count}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증)${isTri ? ' * 0.5(삼각형)' : ''} \n= ${weight.toFixed(2)} kg\n`);
                 }
             };
             calcRebar('X1(하)', 'slab-x1-size', 'slab-x1-grade', 'slab-x1-space', w, l, false); 
@@ -582,39 +587,105 @@
 
             let rebarDict = {}, rebarFormulas = [], rebarDetails = [];
             const zones = BEAM_TYPES_CONFIG[beamType];
-            const isSplitType = beamType !== '전단형';
             
+            // 철근 기록 헬퍼 함수
+            function addRebarRecord(label, size, grade, qty, baseLen, hooks, isPassThrough, isTop, typeCode) {
+                const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(fck);
+                let ld = Math.round((0.6 * db * fy) / Math.sqrt(fckNum));
+                if(isTop) ld = Math.round(ld * 1.3);
+                
+                let hookLen = Math.max(0, h - 80);
+                let singleLen = baseLen;
+                let formulaText = `구간길이 ${baseLen}`;
+                let detailText = `구간길이: ${baseLen}mm`;
+
+                if (isPassThrough) {
+                    // 전체를 관통하는 기본근 (8m 이음 및 단부 갈고리 발생)
+                    let spliceLen = Math.round(ld * 1.3);
+                    let spliceCount = Math.floor(baseLen / 8000);
+                    singleLen += (spliceCount * spliceLen) + (hookLen * hooks);
+                    formulaText += ` + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*hooks}`;
+                    detailText += `, 정착: ${ld}mm, 이음: ${spliceLen}mm(${spliceCount}회), 갈고리: ${hookLen}mm(x${hooks})`;
+                } else {
+                    // 보강근 또는 독립근
+                    if (typeCode === 'cen-extra') {
+                        // 중앙 보강근 (단순 Ld * 2)
+                        singleLen += (ld * 2);
+                        formulaText += ` + 정착 ${ld}*2`;
+                        detailText += `, 정착: ${ld}mm(x2)`;
+                    } else {
+                        // 단부 보강근 ((정착+단부갈고리) * 발생횟수)
+                        let anchorTotal = (ld + hookLen) * hooks;
+                        singleLen += anchorTotal;
+                        formulaText += ` + (정착${ld}+단부갈고리${hookLen})*${hooks}`;
+                        detailText += `, 정착+갈고리: ${ld}+${hookLen}mm (x${hooks}회)`;
+                    }
+                }
+
+                let weight = (singleLen / 1000) * qty * REBAR_DATA[size].weight * lossRebar;
+                const key = `${size}(${grade})`;
+                
+                rebarDict[key] = (rebarDict[key] || 0) + weight;
+                rebarDetails.push(`[${label}] ${key} - ${detailText}`);
+                rebarFormulas.push(`[${label}] ${key}:\n(${formulaText}) / 1000 \n= ${singleLen/1000}m * ${qty}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
+            }
+
             BAR_TYPES.forEach(bar => {
                 if (bar.type === 'main') {
-                    // 1. 기본근 (중앙부) 산출
-                    let cenVal = 0, cenSize = '', cenGrade = '';
-                    
-                    if (isSplitType) {
-                        cenVal = getVal(`beam_cen_${bar.id}_val`);
-                        cenSize = getStr(`beam_cen_${bar.id}_size`);
-                        cenGrade = getStr(`beam_cen_${bar.id}_grade`);
-                        
-                        if (cenVal > 0) {
-                            calcMainRebar(cenSize, cenGrade, cenVal, bar, '중앙(기본근)', l, 2); // 전체길이 관통
+                    const isTop = bar.isTop;
+                    const labelPrefix = bar.label;
+
+                    if (beamType === '전단형') {
+                        const qty = getVal(`beam_all_${bar.id}_val`);
+                        if (qty > 0) {
+                            addRebarRecord(`${labelPrefix}-전단`, getStr(`beam_all_${bar.id}_size`), getStr(`beam_all_${bar.id}_grade`), qty, l, 2, true, isTop, 'pass');
                         }
+                    } else if (beamType === '양단중앙형') {
+                        const endQty = getVal(`beam_end_${bar.id}_val`), endSize = getStr(`beam_end_${bar.id}_size`), endGrade = getStr(`beam_end_${bar.id}_grade`);
+                        const cenQty = getVal(`beam_cen_${bar.id}_val`), cenSize = getStr(`beam_cen_${bar.id}_size`), cenGrade = getStr(`beam_cen_${bar.id}_grade`);
                         
-                        // 2. 보강근 (단부) 산출
-                        zones.filter(z => z.id !== 'cen').forEach(zone => {
-                            const zVal = getVal(`beam_${zone.id}_${bar.id}_val`);
-                            if (zVal > 0 && zVal !== cenVal) {
-                                const zSize = getStr(`beam_${zone.id}_${bar.id}_size`);
-                                const zGrade = getStr(`beam_${zone.id}_${bar.id}_grade`);
-                                const extraQty = Math.abs(zVal - cenVal); // 보강근은 중앙 갯수와의 차이값(절댓값) 사용
-                                const extraLen = l * zone.ratio; // 구간 길이 (L/4 또는 L/2)
-                                
-                                calcExtraRebar(zSize, zGrade, extraQty, bar, `${zone.label}(보강근)`, extraLen, zone.hooks);
-                            }
-                        });
-                    } else {
-                        // 전단형
-                        const allVal = getVal(`beam_all_${bar.id}_val`);
-                        if(allVal > 0) {
-                            calcMainRebar(getStr(`beam_all_${bar.id}_size`), getStr(`beam_all_${bar.id}_grade`), allVal, bar, '전단(기본근)', l, 2);
+                        // 크기와 강도가 완벽히 동일할 때만 CASE 1-1 (통과/보강 분리) 적용
+                        const isSameSpec = (endSize === cenSize) && (endGrade === cenGrade);
+
+                        if (isSameSpec && (endQty > 0 || cenQty > 0)) {
+                            const passQty = Math.min(endQty, cenQty);
+                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenSize, cenGrade, passQty, l, 2, true, isTop, 'pass');
+                            
+                            const endExtra = endQty - passQty;
+                            if (endExtra > 0) addRebarRecord(`${labelPrefix}-양단(보강)`, endSize, endGrade, endExtra, l/2, 2, false, isTop, 'end-extra');
+                            
+                            const cenExtra = cenQty - passQty;
+                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenSize, cenGrade, cenExtra, l/2, 0, false, isTop, 'cen-extra');
+                        } else {
+                            // CASE 1-2 (독립 산출)
+                            if (endQty > 0) addRebarRecord(`${labelPrefix}-양단(독립)`, endSize, endGrade, endQty, l/2, 2, false, isTop, 'end-extra');
+                            if (cenQty > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenSize, cenGrade, cenQty, l/2, 0, false, isTop, 'cen-extra');
+                        }
+                    } else if (beamType === '내중외단형') {
+                        const inQty = getVal(`beam_in_${bar.id}_val`), inSize = getStr(`beam_in_${bar.id}_size`), inGrade = getStr(`beam_in_${bar.id}_grade`);
+                        const cenQty = getVal(`beam_cen_${bar.id}_val`), cenSize = getStr(`beam_cen_${bar.id}_size`), cenGrade = getStr(`beam_cen_${bar.id}_grade`);
+                        const outQty = getVal(`beam_out_${bar.id}_val`), outSize = getStr(`beam_out_${bar.id}_size`), outGrade = getStr(`beam_out_${bar.id}_grade`);
+
+                        // 3구간 모두 크기와 강도가 일치할 때만 CASE 2-1 (통과/보강 분리) 적용
+                        const isSameSpec = (inSize === cenSize && cenSize === outSize) && (inGrade === cenGrade && cenGrade === outGrade);
+
+                        if (isSameSpec && (inQty > 0 || cenQty > 0 || outQty > 0)) {
+                            const passQty = Math.min(inQty, cenQty, outQty);
+                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenSize, cenGrade, passQty, l, 2, true, isTop, 'pass');
+                            
+                            const inExtra = inQty - passQty;
+                            if (inExtra > 0) addRebarRecord(`${labelPrefix}-내단(보강)`, inSize, inGrade, inExtra, l/4, 1, false, isTop, 'in-extra');
+                            
+                            const cenExtra = cenQty - passQty;
+                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenSize, cenGrade, cenExtra, l/2, 0, false, isTop, 'cen-extra');
+                            
+                            const outExtra = outQty - passQty;
+                            if (outExtra > 0) addRebarRecord(`${labelPrefix}-외단(보강)`, outSize, outGrade, outExtra, l/4, 1, false, isTop, 'out-extra');
+                        } else {
+                            // CASE 2-2 (독립 산출)
+                            if (inQty > 0) addRebarRecord(`${labelPrefix}-내단(독립)`, inSize, inGrade, inQty, l/4, 1, false, isTop, 'in-extra');
+                            if (cenQty > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenSize, cenGrade, cenQty, l/2, 0, false, isTop, 'cen-extra');
+                            if (outQty > 0) addRebarRecord(`${labelPrefix}-외단(독립)`, outSize, outGrade, outQty, l/4, 1, false, isTop, 'out-extra');
                         }
                     }
                 } else if (bar.type === 'stirrup') {
@@ -634,49 +705,11 @@
                             const key = `${size}(${grade})`;
                             rebarDict[key] = (rebarDict[key] || 0) + weight;
                             rebarDetails.push(`[${zone.label}] ${bar.label} - 구간길이: ${zoneLength}mm`);
-                            rebarFormulas.push(`[${zone.label}] ${bar.label} ${key}:\n${singleLen/1000}m(둘레) * ${count}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
+                            rebarFormulas.push(`[${zone.label}] ${bar.label} ${key}:\n${singleLen/1000}m(둘레) * ${count}조 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
                         }
                     });
                 }
             });
-
-            // 기본근 계산 함수 (전체 관통, 8m 이음 발생)
-            function calcMainRebar(size, grade, qty, barInfo, label, lengthDir, hooks) {
-                const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(fck);
-                let ld = Math.round((0.6 * db * fy) / Math.sqrt(fckNum));
-                if(barInfo.isTop) ld = Math.round(ld * 1.3);
-                
-                let spliceLen = Math.round(ld * 1.3);
-                let spliceCount = Math.floor(lengthDir / 8000);
-                let hookLen = Math.max(0, h - 80);
-                
-                let singleLen = lengthDir + (spliceCount * spliceLen) + (hookLen * hooks);
-                let weight = (singleLen / 1000) * qty * REBAR_DATA[size].weight * lossRebar;
-                
-                const key = `${size}(${grade})`;
-                rebarDict[key] = (rebarDict[key] || 0) + weight;
-                rebarDetails.push(`[${label}] ${barInfo.label} - 정착: ${ld}mm, 이음: ${spliceLen}mm(${spliceCount}회), 갈고리: ${hookLen}mm(x${hooks})`);
-                rebarFormulas.push(`[${label}] ${barInfo.label} ${key}:\n(전체길이 ${lengthDir} + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*hooks}) / 1000 \n= ${singleLen/1000}m * ${qty}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
-            }
-
-            // 보강근 계산 함수 (정착 + 갈고리) * hooks
-            function calcExtraRebar(size, grade, qty, barInfo, label, lengthDir, hooks) {
-                const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(fck);
-                let ld = Math.round((0.6 * db * fy) / Math.sqrt(fckNum));
-                if(barInfo.isTop) ld = Math.round(ld * 1.3);
-                
-                let hookLen = Math.max(0, h - 80);
-                
-                // 보강근 수식: 구간길이 + (정착 + 단부갈고리) * 발생횟수(양단이면 2, 내외단이면 1)
-                let anchorTotal = (ld + hookLen) * hooks;
-                let singleLen = lengthDir + anchorTotal;
-                let weight = (singleLen / 1000) * qty * REBAR_DATA[size].weight * lossRebar;
-                
-                const key = `${size}(${grade})`;
-                rebarDict[key] = (rebarDict[key] || 0) + weight;
-                rebarDetails.push(`[${label}] ${barInfo.label} - 구간길이: ${lengthDir}mm, 정착+갈고리: ${ld}+${hookLen}mm (x${hooks}회)`);
-                rebarFormulas.push(`[${label}] ${barInfo.label} ${key}:\n(구간길이 ${lengthDir} + (정착${ld}+갈고리${hookLen})*${hooks}) / 1000 \n= ${singleLen/1000}m * ${qty}가닥(차이수량) * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
-            }
 
             let totalRebar = 0; for(let s in rebarDict) totalRebar += rebarDict[s];
 
