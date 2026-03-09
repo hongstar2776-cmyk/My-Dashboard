@@ -226,7 +226,7 @@
                             <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-layer-group mr-1"></i> 형태별 주근 및 늑근 배근</h4>
                             
                             <!-- 구간별 세로 나열 레이아웃이 적용될 동적 컨테이너 -->
-                            <div id="beam-dynamic-inputs" class="grid gap-3">
+                            <div id="beam-dynamic-inputs" class="grid gap-4 grid-cols-1">
                                 <!-- JS will inject inputs here based on beam-type -->
                             </div>
                         </div>
@@ -284,10 +284,24 @@
             </div>
 
             <!-- Detail Breakdown Summary -->
-            <div class="mt-4 bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-                <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-chart-pie mr-1"></i> 철근 규격별 총합 (로스율 반영)</h3>
-                <div id="rebar-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
-                    데이터 없음
+            <div class="mt-4 bg-white rounded-lg shadow-sm border border-slate-200 p-4 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-cubes mr-1 text-slate-500"></i> 레미콘 규격별 총합 (로스율 반영)</h3>
+                    <div id="conc-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
+                        데이터 없음
+                    </div>
+                </div>
+                <div class="border-t border-slate-100 pt-3">
+                    <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-border-all mr-1 text-amber-600"></i> 거푸집 총합 (로스율 반영)</h3>
+                    <div id="form-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
+                        데이터 없음
+                    </div>
+                </div>
+                <div class="border-t border-slate-100 pt-3">
+                    <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-bars-staggered mr-1 text-blue-600"></i> 철근 규격별 총합 (로스율 반영)</h3>
+                    <div id="rebar-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
+                        데이터 없음
+                    </div>
                 </div>
             </div>
         </section>
@@ -423,8 +437,8 @@
             const container = document.getElementById('beam-dynamic-inputs');
             const zones = BEAM_TYPES_CONFIG[beamType];
             
-            // 구간 수에 따라 그리드 열 설정 (좁은 화면에서는 1열, 아주 넓은 화면에서는 3열)
-            container.className = `grid gap-3 grid-cols-1 xl:grid-cols-${zones.length}`;
+            // 항상 세로로 나열되도록 1열(grid-cols-1)로 고정합니다.
+            container.className = `grid gap-4 grid-cols-1`;
             
             let html = '';
             const sizeOptions = Object.keys(REBAR_DATA).map(t => `<option value="${t}" ${t==='HD13'?'selected':''}>${t}</option>`).join('');
@@ -439,8 +453,8 @@
                     html += `
                         <div class="flex gap-1 items-center">
                             <span class="w-14 text-xs font-bold text-slate-600 tracking-tighter">${bar.label}</span>
-                            <select id="${inputId}_size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[55px] outline-none focus:border-blue-400">${sizeOptions}</select>
-                            <select id="${inputId}_grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[60px] outline-none focus:border-blue-400">${gradeOptions}</select>
+                            <select id="${inputId}_size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">${sizeOptions}</select>
+                            <select id="${inputId}_grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">${gradeOptions}</select>
                             <input type="number" id="${inputId}_val" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="${bar.unit}">
                         </div>
                     `;
@@ -558,12 +572,13 @@
 
             const w_m = w / 1000, h_m = h / 1000, l_m = l / 1000, tslab_m = tslab / 1000;
 
-            // 콘크리트 및 거푸집 산출 (슬래브 두께 차감)
-            const concVol = w_m * (h_m - tslab_m) * l_m;
-            const formArea = (w_m + (h_m - tslab_m) * 2) * l_m; 
+            // 콘크리트 및 거푸집 산출 (슬래브 두께 차감 - 음수 방지 안전코드 추가)
+            const effectH_m = Math.max(0, h_m - tslab_m);
+            const concVol = w_m * effectH_m * l_m;
+            const formArea = (w_m + effectH_m * 2) * l_m; 
 
-            const concFormula = `(${w_m} * (${h_m} - ${tslab_m}) * ${l_m}) * ${lossConc}(할증) = ${(concVol * lossConc).toFixed(3)} m³`;
-            const formFormula = `(${w_m} + (${h_m} - ${tslab_m}) * 2) * ${l_m} * ${lossForm}(할증) = ${(formArea * lossForm).toFixed(3)} m²`;
+            const concFormula = `(${w_m} * ${effectH_m.toFixed(3)}(유효높이) * ${l_m}) * ${lossConc}(할증) = ${(concVol * lossConc).toFixed(3)} m³`;
+            const formFormula = `(${w_m} + ${effectH_m.toFixed(3)}(유효높이) * 2) * ${l_m} * ${lossForm}(할증) = ${(formArea * lossForm).toFixed(3)} m²`;
 
             let rebarDict = {}, rebarFormulas = [], rebarDetails = [];
             const zones = BEAM_TYPES_CONFIG[beamType];
@@ -612,8 +627,8 @@
                             const zoneLength = l * zone.ratio;
                             
                             const count = Math.ceil(zoneLength / spacing) + 1;
-                            // 늑근 둘레는 슬래브 두께 차감한 높이로 정밀 산출
-                            const singleLen = 2 * (w + (h - tslab)); 
+                            // 늑근 둘레는 슬래브 두께 차감한 높이로 정밀 산출 (음수방지)
+                            const singleLen = 2 * (w + Math.max(0, h - tslab)); 
                             const weight = (singleLen / 1000) * count * REBAR_DATA[size].weight * lossRebar;
                             
                             const key = `${size}(${grade})`;
@@ -652,7 +667,7 @@
                 
                 let hookLen = Math.max(0, h - 80);
                 
-                // 완벽히 지적해주신 수식: 구간길이 + (정착 + 단부갈고리) * 발생횟수(양단이면 2, 내외단이면 1)
+                // 보강근 수식: 구간길이 + (정착 + 단부갈고리) * 발생횟수(양단이면 2, 내외단이면 1)
                 let anchorTotal = (ld + hookLen) * hooks;
                 let singleLen = lengthDir + anchorTotal;
                 let weight = (singleLen / 1000) * qty * REBAR_DATA[size].weight * lossRebar;
@@ -687,14 +702,22 @@
         function renderTable() {
             const tbody = document.getElementById('result-tbody');
             const tfoot = document.getElementById('result-tfoot');
-            const summaryDiv = document.getElementById('rebar-summary');
+            const concSummaryDiv = document.getElementById('conc-summary');
+            const formSummaryDiv = document.getElementById('form-summary');
+            const rebarSummaryDiv = document.getElementById('rebar-summary');
 
             if(calculatedItems.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400">입력된 데이터가 없습니다.</td></tr>`;
-                tfoot.style.display = 'none'; summaryDiv.innerHTML = "데이터 없음"; return;
+                tfoot.style.display = 'none'; 
+                concSummaryDiv.innerHTML = "데이터 없음";
+                formSummaryDiv.innerHTML = "데이터 없음";
+                rebarSummaryDiv.innerHTML = "데이터 없음"; 
+                return;
             }
 
-            let html = '', sumConc = 0, sumForm = 0, sumRebar = 0, totalRebarByType = {};
+            let html = '', sumConc = 0, sumForm = 0, sumRebar = 0;
+            let totalRebarByType = {};
+            let totalConcByFck = {};
 
             calculatedItems.forEach(item => {
                 html += `
@@ -717,9 +740,13 @@
                     </tr>
                 `;
                 sumConc += item.conc; sumForm += item.form; sumRebar += item.rebarTotal;
+                
+                // 철근 규격별 수집
                 for(let size in item.rebarDetailsMap) {
                     totalRebarByType[size] = (totalRebarByType[size] || 0) + item.rebarDetailsMap[size];
                 }
+                // 레미콘 강도별 수집
+                totalConcByFck[item.fck] = (totalConcByFck[item.fck] || 0) + item.conc;
             });
 
             tbody.innerHTML = html; tfoot.style.display = 'table-row-group';
@@ -727,11 +754,26 @@
             document.getElementById('total-form').innerText = sumForm.toFixed(2);
             document.getElementById('total-rebar').innerText = sumRebar.toFixed(2);
 
-            let summaryHtml = '';
-            Object.keys(totalRebarByType).sort().forEach(k => {
-                summaryHtml += `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">${k} : ${(totalRebarByType[k]/1000).toFixed(3)} ton</span>`;
+            // 1. 레미콘 서머리 렌더링
+            let concSummaryHtml = '';
+            Object.keys(totalConcByFck).sort().forEach(fck => {
+                concSummaryHtml += `<span class="bg-slate-100 border border-slate-300 text-slate-700 px-2 py-1 rounded text-xs font-bold">${fck} MPa : ${totalConcByFck[fck].toFixed(3)} m³</span>`;
             });
-            summaryDiv.innerHTML = summaryHtml || "철근 물량 없음";
+            concSummaryDiv.innerHTML = concSummaryHtml || "데이터 없음";
+
+            // 2. 거푸집 서머리 렌더링
+            let formSummaryHtml = '';
+            if (sumForm > 0) {
+                formSummaryHtml = `<span class="bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1 rounded text-xs font-bold">일반 : ${sumForm.toFixed(3)} m²</span>`;
+            }
+            formSummaryDiv.innerHTML = formSummaryHtml || "데이터 없음";
+
+            // 3. 철근 서머리 렌더링
+            let rebarSummaryHtml = '';
+            Object.keys(totalRebarByType).sort().forEach(k => {
+                rebarSummaryHtml += `<span class="bg-blue-50 border border-blue-200 text-blue-800 px-2 py-1 rounded text-xs font-bold">${k} : ${(totalRebarByType[k]/1000).toFixed(3)} ton</span>`;
+            });
+            rebarSummaryDiv.innerHTML = rebarSummaryHtml || "데이터 없음";
         }
 
         function exportToExcel() {
