@@ -106,6 +106,47 @@
                 return { mat, lab, exp, tot };
             }, [relatedDetails]);
 
+            // 열 너비 조절 관련 상태 및 함수 추가
+            const [colWidths, setColWidths] = useState({
+                name: 250,
+                standard: 200,
+                unit: 80,
+                material: 90,
+                labor: 90,
+                expense: 90,
+                total: 100
+            });
+            const resizingCol = useRef(null);
+            const startX = useRef(0);
+            const startWidth = useRef(0);
+
+            const handleResizeStart = (e, colKey) => {
+                e.preventDefault();
+                e.stopPropagation();
+                resizingCol.current = colKey;
+                startX.current = e.pageX;
+                startWidth.current = colWidths[colKey];
+                
+                const handleMouseMove = (moveEvent) => {
+                    if (!resizingCol.current) return;
+                    const diffX = moveEvent.pageX - startX.current;
+                    const newWidth = Math.max(50, startWidth.current + diffX); // 최소 너비 50px 보장
+                    setColWidths(prev => ({ ...prev, [resizingCol.current]: newWidth }));
+                };
+
+                const handleMouseUp = () => {
+                    resizingCol.current = null;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            };
+
+            // 테이블 전체 너비를 개별 열 너비의 합으로 고정하여 긴 텍스트에 의해 표가 강제로 늘어나는 현상 방지
+            const tableWidth = colWidths.name + colWidths.standard + colWidths.unit + colWidths.material + colWidths.labor + colWidths.expense + colWidths.total;
+
             // 앱 로드 시 DB에 데이터가 있는지 확인하고, 없으면 자동 동기화 실행
             useEffect(() => {
                 const init = async () => {
@@ -445,55 +486,76 @@
                                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-[650px]">
                                         <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                                             <h3 className="font-bold text-slate-800">목록 검색 결과 (방향키 상하 이동 가능)</h3>
-                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                                {searchResults.length > 0 ? `최대 200건 표시` : '0건'}
-                                            </span>
-                                        </div>
-                                        
-                                        <div className="table-container flex-1 bg-white">
-                                            <table className="w-full text-sm text-left">
-                                                <thead className="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0 shadow-sm z-10">
-                                                    <tr>
-                                                        <th className="px-4 py-3">품명</th>
-                                                        <th className="px-4 py-3">규격</th>
-                                                        <th className="px-4 py-3 text-center whitespace-nowrap">단위</th>
-                                                        <th className="px-4 py-3 text-right whitespace-nowrap">재료비</th>
-                                                        <th className="px-4 py-3 text-right whitespace-nowrap">노무비</th>
-                                                        <th className="px-4 py-3 text-right whitespace-nowrap">경비</th>
-                                                        <th className="px-4 py-3 text-right whitespace-nowrap">합계</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {searchResults.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan="7" className="px-4 py-12 text-center text-slate-400">
-                                                                검색 결과가 없습니다.
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        searchResults.map((item, idx) => (
-                                                            <tr 
-                                                                key={idx} 
-                                                                ref={selectedItem?.id === item.id ? selectedRowRef : null}
-                                                                onClick={() => handleItemClick(item)}
-                                                                className={`border-b border-slate-100 cursor-pointer transition-colors ${selectedItem?.id === item.id ? 'bg-blue-100 border-l-4 border-l-blue-500' : 'hover:bg-blue-50'}`}
-                                                            >
-                                                                <td className="px-4 py-3 font-semibold text-slate-800 break-keep">{item.name}</td>
-                                                                <td className="px-4 py-3 text-slate-600 truncate max-w-[150px]" title={item.standard}>{item.standard}</td>
-                                                                <td className="px-4 py-3 text-center text-slate-500 whitespace-nowrap">{item.unit}</td>
-                                                                <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs">{formatNumber(item.material)}</td>
-                                                                <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs">{formatNumber(item.labor)}</td>
-                                                                <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs">{formatNumber(item.expense)}</td>
-                                                                <td className="px-4 py-3 text-right text-blue-700 font-bold font-mono">{formatNumber(item.total)}</td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                            {searchResults.length > 0 ? `최대 200건 표시` : '0건'}
+                                        </span>
                                     </div>
+                                    
+                                    <div className="table-container flex-1 bg-white overflow-x-auto">
+                                        <table className="text-sm text-left" style={{ tableLayout: 'fixed', width: tableWidth }}>
+                                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0 shadow-sm z-10">
+                                                <tr>
+                                                    <th style={{ width: colWidths.name }} className="relative px-4 py-3 border-r border-slate-200">
+                                                        품명
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'name')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.standard }} className="relative px-4 py-3 border-r border-slate-200">
+                                                        규격
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'standard')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.unit }} className="relative px-4 py-3 text-center whitespace-nowrap border-r border-slate-200">
+                                                        단위
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'unit')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.material }} className="relative px-4 py-3 text-right whitespace-nowrap border-r border-slate-200">
+                                                        재료비
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'material')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.labor }} className="relative px-4 py-3 text-right whitespace-nowrap border-r border-slate-200">
+                                                        노무비
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'labor')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.expense }} className="relative px-4 py-3 text-right whitespace-nowrap border-r border-slate-200">
+                                                        경비
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'expense')}></div>
+                                                    </th>
+                                                    <th style={{ width: colWidths.total }} className="relative px-4 py-3 text-right whitespace-nowrap">
+                                                        합계
+                                                        <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400 z-20" onMouseDown={(e) => handleResizeStart(e, 'total')}></div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {searchResults.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="7" className="px-4 py-12 text-center text-slate-400">
+                                                            검색 결과가 없습니다.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    searchResults.map((item, idx) => (
+                                                        <tr 
+                                                            key={idx} 
+                                                            ref={selectedItem?.id === item.id ? selectedRowRef : null}
+                                                            onClick={() => handleItemClick(item)}
+                                                            className={`border-b border-slate-100 cursor-pointer transition-colors ${selectedItem?.id === item.id ? 'bg-blue-100 border-l-4 border-l-blue-500' : 'hover:bg-blue-50'}`}
+                                                        >
+                                                            <td className="px-4 py-3 font-semibold text-slate-800 truncate" title={item.name}>{item.name}</td>
+                                                            <td className="px-4 py-3 text-slate-600 truncate" title={item.standard}>{item.standard}</td>
+                                                            <td className="px-4 py-3 text-center text-slate-500 truncate">{item.unit}</td>
+                                                            <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs truncate">{formatNumber(item.material)}</td>
+                                                            <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs truncate">{formatNumber(item.labor)}</td>
+                                                            <td className="px-4 py-3 text-right text-slate-600 font-mono text-xs truncate">{formatNumber(item.expense)}</td>
+                                                            <td className="px-4 py-3 text-right text-blue-700 font-bold font-mono truncate">{formatNumber(item.total)}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
 
-                                    {/* 상세 내역 뷰 */}
+                                {/* 상세 내역 뷰 */}
                                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-[650px]">
                                         <div className="p-4 bg-slate-50 border-b border-slate-200">
                                             <h3 className="font-bold text-slate-800">선택 항목 상세 및 하위 구성 내역</h3>
