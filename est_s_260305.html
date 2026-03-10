@@ -49,20 +49,115 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen p-4 md:p-8">
 
+    <!-- 가이드북 모달 팝업 -->
+    <div id="guideModal" class="fixed inset-0 z-[100] hidden bg-black bg-opacity-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- 팝업 헤더 -->
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    작성요령 및 가이드북
+                </h3>
+                <button onclick="toggleGuide()" class="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 팝업 내용 -->
+            <div class="p-6 overflow-y-auto space-y-8 text-sm text-gray-700">
+                
+                <!-- 섹션 1 -->
+                <section>
+                    <h4 class="text-base font-semibold text-blue-700 border-b-2 border-blue-100 pb-2 mb-3 flex items-center gap-2">
+                        <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
+                        기본 작성 순서
+                    </h4>
+                    <ul class="list-disc list-inside space-y-2 pl-2 marker:text-blue-500">
+                        <li><strong>공사명 및 일괄 로스율:</strong> 상단에 공사명과 일괄 로스율을 입력합니다. 로스율은 한 번 설정하면 리스트의 모든 자재 중량 산출 시 자동 반영됩니다.</li>
+                        <li><strong>위치 및 부재명:</strong> 도면에 표기된 해당 부재의 위치(예: 1F)와 부재 이름(예: G1)을 입력합니다. (다음 입력 시 편의를 위해 초기화되지 않고 유지됩니다.)</li>
+                        <li><strong>항목(강종) 선택:</strong> H-BEAM, C형강 등 산출할 강재의 종류를 고릅니다.</li>
+                        <li><strong>표준단면치수 검색:</strong> 규격의 일부(예: <code class="bg-gray-100 px-1 py-0.5 rounded text-red-500">100</code>)를 입력하면 자동완성 목록이 나옵니다. <span class="text-blue-600 font-medium">방향키(↓, ↑)로 선택 후 Enter</span>를 누르거나 마우스로 클릭하세요. (끝까지 정확히 직접 타이핑하셔도 됩니다.)</li>
+                        <li><strong>길이 및 수량 입력:</strong> 해당 부재 1개의 길이(M)와 갯수(EA)를 입력하고 <span class="bg-gray-800 text-white px-1.5 py-0.5 rounded text-xs">Enter</span> 키를 누르면 리스트에 등록됩니다.</li>
+                    </ul>
+                </section>
+
+                <!-- 섹션 2 -->
+                <section>
+                    <h4 class="text-base font-semibold text-indigo-700 border-b-2 border-indigo-100 pb-2 mb-3 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
+                        버튼 기능 안내
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="font-bold text-indigo-700 mb-1">📥 JSON 불러오기</div>
+                            <p class="text-gray-600 text-xs">이전에 컴퓨터에 백업해둔 산출서 파일(<code>.json</code>)을 선택하여 이어서 작업할 수 있도록 화면에 복구합니다.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="font-bold text-indigo-700 mb-1">💾 JSON 저장</div>
+                            <p class="text-gray-600 text-xs">현재까지 작성된 내용을 브라우저가 꺼져도 날아가지 않도록 내 컴퓨터에 파일(<code>.json</code>)로 백업 및 다운로드합니다.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="font-bold text-green-700 mb-1">📊 엑셀 내보내기</div>
+                            <p class="text-gray-600 text-xs">최종 산출된 내역을 엑셀 파일(<code>.xlsx</code>)로 다운로드합니다. 엑셀 내부에 단중 및 면적 산출 수식(=길이*수량*단중...)이 그대로 유지됩니다.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="font-bold text-blue-700 mb-1">➕ 리스트에 추가</div>
+                            <p class="text-gray-600 text-xs">입력한 치수 데이터를 바탕으로 중량 및 도장면적을 자동 산출하여 하단 표에 등록합니다.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 섹션 3 -->
+                <section>
+                    <h4 class="text-base font-semibold text-teal-700 border-b-2 border-teal-100 pb-2 mb-3 flex items-center gap-2">
+                        <span class="bg-teal-100 text-teal-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">3</span>
+                        기타 및 수정/삭제
+                    </h4>
+                    <ul class="list-disc list-inside space-y-2 pl-2 marker:text-teal-500">
+                        <li>리스트 우측의 <strong class="text-blue-500">파란색 펜 버튼</strong>을 클릭하면 해당 줄의 규격, 길이, 수량을 즉시 수정할 수 있으며 값은 자동 재계산됩니다.</li>
+                        <li>리스트 우측의 <strong class="text-red-500">빨간색 휴지통 버튼</strong>을 클릭하면 해당 줄이 삭제됩니다.</li>
+                        <li>산출되는 <strong>중량(KG)</strong>에는 입력된 로스율(할증)이 포함되며, <strong>단위면적(도장면적)</strong>은 원칙상 정미량(할증 미적용)으로 계산됩니다.</li>
+                    </ul>
+                </section>
+                
+            </div>
+            
+            <!-- 팝업 푸터 -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <button onclick="toggleGuide()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
+                    확인 및 닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-[1664px] w-[98%] mx-auto space-y-6">
         
         <!-- 경고 문구 -->
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl shadow-sm flex items-center gap-3 text-sm font-bold">
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl shadow-sm flex items-center gap-3 text-sm font-bold mt-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
-            해당 자료는 서버 어디에도 저장되지 않습니다. 반드시 엑셀로 내보내기 기능을 활용하여 자료 저장을 하셔야합니다.
+            해당 자료는 서버 어디에도 저장되지 않습니다. 반드시 우측 상단의 저장/내보내기 기능을 활용하여 자료 저장을 하셔야합니다.
         </div>
 
         <!-- 헤더 -->
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex-1 w-full">
-                <h1 class="text-2xl font-bold text-gray-900">강재 중량 및 면적 산출서</h1>
+                <!-- 타이틀 및 물음표 아이콘 추가 -->
+                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    강재 중량 및 면적 산출서
+                    <button onclick="toggleGuide()" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-full p-1 transition-colors" title="작성요령 및 가이드북 보기">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </h1>
+                
                 <div class="mt-3 flex flex-col md:flex-row items-start md:items-center gap-4">
                     <div class="flex items-center gap-3 w-full md:w-auto">
                         <label class="font-medium text-gray-700 whitespace-nowrap">공사명</label>
@@ -75,12 +170,32 @@
                     </div>
                 </div>
             </div>
-            <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-                엑셀로 내보내기
-            </button>
+            
+            <!-- 액션 버튼 그룹 (JSON 불러오기, JSON 저장, 엑셀 내보내기) -->
+            <div class="flex items-center gap-2 flex-wrap justify-end">
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importFromJson(event)">
+                
+                <button onclick="document.getElementById('jsonFileInput').click()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap" title="저장된 JSON 백업 파일을 불러옵니다.">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    JSON 불러오기
+                </button>
+                
+                <button onclick="exportToJson()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap" title="현재 상태를 JSON 파일로 저장하여 나중에 다시 불러올 수 있습니다.">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM10 5a1 1 0 011 1v6.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    JSON 저장
+                </button>
+
+                <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap" title="최종 결과물을 엑셀(Excel)로 다운로드합니다.">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                    </svg>
+                    엑셀 내보내기
+                </button>
+            </div>
         </div>
 
         <!-- 입력부 -->
@@ -192,9 +307,24 @@
     </div>
 
     <script>
+        // --- 모달 팝업 토글 로직 추가 ---
+        function toggleGuide() {
+            const modal = document.getElementById('guideModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // 모달 바깥 배경 클릭 시 닫기
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('guideModal');
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+
         // --- 1. 내장 데이터 (DB 역할) ---
         const steelData = [
-            // H-BEAM (이미지 기반)
+            // H-BEAM
             { type: 'H-BEAM', standard: '100*100*6*8', weight: 17.2, area4: 0.588, area3: 0.488 },
             { type: 'H-BEAM', standard: '125*125*6.5*9', weight: 23.8, area4: 0.737, area3: 0.612 },
             { type: 'H-BEAM', standard: '150*75*5*7', weight: 14.0, area4: 0.590, area3: 0.515 },
@@ -579,7 +709,7 @@
 
             const matchedSteel = steelData.find(s => s.type === item.type && s.standard === stdSelect);
             if (!matchedSteel) {
-                alert("해당 강종에 유효하지 않은 규격입니다."); // 콤보박스 선택이므로 거의 안일어남
+                alert("해당 강종에 유효하지 않은 규격입니다."); 
                 return;
             }
 
@@ -720,7 +850,7 @@
             calculationList.forEach((item, index) => {
                 let excelRow = index + 5; 
                 
-                // 중량에 수식 적용: F열(길이) * G열(수량) * H열(단위중량) * (1 + I열(로스율)/100)
+                // 중량에 수식 적용: F열(길이) * G열(수량) * H열(단중) * (1 + I열(로스율)/100)
                 let weightFormula = { 
                     t: 'n', 
                     v: item.weight, 
@@ -766,6 +896,74 @@
             
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
             XLSX.writeFile(wb, `강재산출서_${dateStr}.xlsx`);
+        }
+
+        // --- 5. JSON 저장 (백업용) ---
+        function exportToJson() {
+            if (calculationList.length === 0) {
+                alert("저장할 데이터가 없습니다.");
+                return;
+            }
+
+            // 공사명, 로스율, 리스트 전체 데이터를 하나의 객체로 포장
+            const dataToSave = {
+                projectName: document.getElementById("projectName").value,
+                globalLossRate: document.getElementById("globalLossRate").value,
+                calculationList: calculationList
+            };
+
+            // JSON 문자열로 변환하여 다운로드 트리거
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToSave));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+            downloadAnchorNode.setAttribute("download", `강재산출서_백업_${dateStr}.json`);
+            
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // --- 6. JSON 불러오기 (복원용) ---
+        function importFromJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 데이터 유효성 검사 (calculationList 배열이 존재하는지)
+                    if (importedData.calculationList && Array.isArray(importedData.calculationList)) {
+                        
+                        // 현재 상태에 데이터 복원
+                        calculationList = importedData.calculationList;
+                        
+                        if (importedData.projectName !== undefined) {
+                            document.getElementById("projectName").value = importedData.projectName;
+                        }
+                        if (importedData.globalLossRate !== undefined) {
+                            document.getElementById("globalLossRate").value = importedData.globalLossRate;
+                        }
+                        
+                        // 로스율을 변경했을 수 있으므로 다시 한번 재계산하여 화면 업데이트
+                        updateGlobalLossRate();
+                        
+                        alert("데이터를 성공적으로 불러왔습니다.");
+                    } else {
+                        alert("유효하지 않은 백업 파일 형식입니다.");
+                    }
+                } catch (error) {
+                    alert("파일을 읽는 중 오류가 발생했습니다.");
+                }
+                
+                // 같은 파일을 다시 선택할 수 있도록 파일 입력값 초기화
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
         }
 
     </script>
