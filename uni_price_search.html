@@ -55,10 +55,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
 
         // 브라우저 내장 데이터베이스(IndexedDB) 설정
-        // 버전을 2로 올리고 불필요한 테이블 제거, 검색 속도를 위한 인덱스 최적화
         const db = new Dexie("ConstructionCostDB");
         db.version(2).stores({
             unitPriceList: '++id, code, searchIndex', // 일위대가목록 (검색 인덱스 포함)
@@ -76,6 +75,9 @@
             const [selectedItem, setSelectedItem] = useState(null);
             const [relatedDetails, setRelatedDetails] = useState([]);
             const [isSearching, setIsSearching] = useState(false);
+
+            // 키보드 이동 시 자동 스크롤을 위한 참조
+            const selectedRowRef = useRef(null);
 
             // 숫자 콤마 표시 유틸리티 함수
             const formatNumber = (val) => {
@@ -111,68 +113,105 @@
                     if (count > 0) {
                         setIsDbReady(true);
                     } else {
-                        // 데이터가 없으면 자동 파싱 실행
                         syncFromGithub(true);
                     }
                 };
                 init();
             }, []);
 
+            // 키보드 방향키 이동 로직
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (activeTab !== 'search' || searchResults.length === 0) return;
+                    
+                    // 입력창에 포커스가 있을 때는 방향키 이동 비활성화 (글자 커서 이동을 위해)
+                    if (document.activeElement.tagName.toLowerCase() === 'input') return;
+
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault(); // 전체 페이지 스크롤 방지
+                        if (!selectedItem) {
+                            handleItemClick(searchResults[0]);
+                        } else {
+                            const currentIndex = searchResults.findIndex(item => item.id === selectedItem.id);
+                            if (currentIndex >= 0 && currentIndex < searchResults.length - 1) {
+                                handleItemClick(searchResults[currentIndex + 1]);
+                            }
+                        }
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault(); // 전체 페이지 스크롤 방지
+                        if (selectedItem) {
+                            const currentIndex = searchResults.findIndex(item => item.id === selectedItem.id);
+                            if (currentIndex > 0) {
+                                handleItemClick(searchResults[currentIndex - 1]);
+                            }
+                        }
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [activeTab, searchResults, selectedItem]);
+
+            // 선택된 항목이 변경될 때마다 화면에 보이도록 스크롤 이동
+            useEffect(() => {
+                if (selectedRowRef.current) {
+                    selectedRowRef.current.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                }
+            }, [selectedItem]);
+
             const checkDbStatus = async () => {
                 const count = await db.unitPriceList.count();
                 if (count > 0) setIsDbReady(true);
             };
 
-            // 복잡한 엑셀 헤더를 무시하고 열 번호(A,B,C...) 기준으로 데이터를 매핑하는 공통 함수
             const processRowData = (tableName, row) => {
                 if (tableName === 'unitPriceList') {
-                    // 헤더 및 빈 행 건너뛰기
                     if (row[0] === '코  드' || row[1] === '일 위 대 가 목 록' || String(row[1]).includes('25-군 공통')) return null;
                     if (!row[0]) return null;
 
                     return {
-                        code: String(row[0]).trim(),           // A열: 코드
-                        name: row[1] || '',                    // B열: 품명
-                        standard: row[2] || '',                // C열: 규격
-                        unit: row[3] || '',                    // D열: 단위
-                        material: row[4] || '0',               // E열: 재료비
-                        labor: row[5] || '0',                  // F열: 노무비
-                        expense: row[6] || '0',                // G열: 경비
-                        total: row[7] || '0',                  // H열: 합계
-                        refNumber: row[8] || '',               // I열: 호표번호
+                        code: String(row[0]).trim(),
+                        name: row[1] || '',
+                        standard: row[2] || '',
+                        unit: row[3] || '',
+                        material: row[4] || '0',
+                        labor: row[5] || '0',
+                        expense: row[6] || '0',
+                        total: row[7] || '0',
+                        refNumber: row[8] || '',
                         searchIndex: row.join(' ').toLowerCase()
                     };
                 } else if (tableName === 'unitPriceDetail') {
-                    // 헤더 및 빈 행 건너뛰기
                     if (row[0] === '품      명' || String(row[0]).includes('25-군 공통') || row[4] === '단  가') return null;
-                    if (!row[13] || String(row[13]).trim() === '') return null; // N열(인덱스 13) 코드가 없으면 무시
+                    if (!row[13] || String(row[13]).trim() === '') return null;
 
                     return {
-                        name: row[0] || '',                    // A열: 품명
-                        standard: row[1] || '',                // B열: 규격
-                        unit: row[2] || '',                    // C열: 단위
-                        quantity: row[3] || '',                // D열: 수량
-                        matPrice: row[4] || '0',               // E열: 재료비 단가
-                        matAmt: row[5] || '0',                 // F열: 재료비 금액
-                        labPrice: row[6] || '0',               // G열: 노무비 단가
-                        labAmt: row[7] || '0',                 // H열: 노무비 금액
-                        expPrice: row[8] || '0',               // I열: 경비 단가
-                        expAmt: row[9] || '0',                 // J열: 경비 금액
-                        totPrice: row[10] || '0',              // K열: 합계 단가
-                        totAmt: row[11] || '0',                // L열: 합계 금액
-                        parentCode: String(row[13]).trim()     // N열: 연결 코드
+                        name: row[0] || '',
+                        standard: row[1] || '',
+                        unit: row[2] || '',
+                        quantity: row[3] || '',
+                        matPrice: row[4] || '0',
+                        matAmt: row[5] || '0',
+                        labPrice: row[6] || '0',
+                        labAmt: row[7] || '0',
+                        expPrice: row[8] || '0',
+                        expAmt: row[9] || '0',
+                        totPrice: row[10] || '0',
+                        totAmt: row[11] || '0',
+                        parentCode: String(row[13]).trim()
                     };
                 }
                 return null;
             };
 
-            // GitHub에서 자동으로 CSV 읽어와서 DB 구축 (최적화 - 2개 파일만)
             const syncFromGithub = async (isAuto = false) => {
                 if (!isAuto && !confirm("GitHub에서 최신 데이터를 가져와 DB를 갱신하시겠습니까?\n(기존 데이터는 덮어씌워집니다)")) return;
                 
                 const GITHUB_BASE_URL = "https://hongstar2776-cmyk.github.io/My-Dashboard/"; 
                 
-                // 최적화를 위해 목록(List)과 상세(Detail) 2개의 파일만 파싱합니다.
                 const filesToFetch = [
                     { url: "unit_price_list.csv", table: "unitPriceList", name: "일위대가목록" },
                     { url: "unit_price_detail.csv", table: "unitPriceDetail", name: "상세내역(일위대가)" }
@@ -188,7 +227,7 @@
                         await new Promise((resolve, reject) => {
                             Papa.parse(GITHUB_BASE_URL + file.url, {
                                 download: true, 
-                                header: false, // 배열 형태로 가져와 열 인덱스로 정확히 매핑
+                                header: false,
                                 skipEmptyLines: true,
                                 complete: async (results) => {
                                     try {
@@ -227,7 +266,6 @@
                 }
             };
 
-            // 수동 파일 업로드 (동일한 파싱 로직 적용)
             const handleFileUpload = async (event, tableName) => {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -260,7 +298,6 @@
                 });
             };
 
-            // 메모리 기반 초고속 검색
             const handleSearch = async (e) => {
                 e.preventDefault();
                 if (!keyword.trim() || !isDbReady) return;
@@ -284,11 +321,9 @@
                 }
             };
 
-            // 아이템 클릭 시 하위 내역 조회 (상세 테이블 N열 매핑)
             const handleItemClick = async (item) => {
                 setSelectedItem(item);
                 try {
-                    // 디테일 데이터베이스에서 parentCode(N열)가 클릭한 항목의 code와 일치하는 것들 호출
                     const details = await db.unitPriceDetail
                         .where('parentCode').equals(item.code)
                         .toArray();
@@ -409,7 +444,7 @@
                                     {/* 검색 결과 목록 (일위대가 목록) */}
                                     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-[650px]">
                                         <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                                            <h3 className="font-bold text-slate-800">목록 검색 결과</h3>
+                                            <h3 className="font-bold text-slate-800">목록 검색 결과 (방향키 상하 이동 가능)</h3>
                                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                                 {searchResults.length > 0 ? `최대 200건 표시` : '0건'}
                                             </span>
@@ -439,8 +474,9 @@
                                                         searchResults.map((item, idx) => (
                                                             <tr 
                                                                 key={idx} 
+                                                                ref={selectedItem?.id === item.id ? selectedRowRef : null}
                                                                 onClick={() => handleItemClick(item)}
-                                                                className={`border-b border-slate-100 cursor-pointer hover:bg-blue-50 transition-colors ${selectedItem?.id === item.id ? 'bg-blue-100' : ''}`}
+                                                                className={`border-b border-slate-100 cursor-pointer transition-colors ${selectedItem?.id === item.id ? 'bg-blue-100 border-l-4 border-l-blue-500' : 'hover:bg-blue-50'}`}
                                                             >
                                                                 <td className="px-4 py-3 font-semibold text-slate-800 break-keep">{item.name}</td>
                                                                 <td className="px-4 py-3 text-slate-600 truncate max-w-[150px]" title={item.standard}>{item.standard}</td>
@@ -590,5 +626,3 @@
     </script>
 </body>
 </html>
-
-
