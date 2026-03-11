@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>본사 공무 업무 보드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 드래그 앤 드롭 시각적 효과 */
+        .drag-over { background-color: #f0fdf4 !important; border-color: #22c55e !important; }
+        .dragging { opacity: 0.4; transform: scale(0.98); }
+        
+        /* 메인 테마 색상 */
+        .theme-bg-blue { background-color: #1e3a8a; } /* 진한 파랑 */
+        .theme-text-blue { color: #1e3a8a; }
+        .theme-border-green { border-color: #15803d; } /* 진한 녹색 */
+        .theme-text-green { color: #15803d; }
+        
+        /* 부드러운 전환 효과 */
+        .task-card { transition: all 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col font-sans text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b px-6 py-4 flex flex-col sm:flex-row justify-between items-center z-10 gap-4">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-100 p-2 rounded-lg">
+                <i data-lucide="building-2" class="w-6 h-6 theme-text-blue"></i>
+            </div>
+            <h1 class="text-xl font-extrabold text-slate-800 tracking-tight">공무 현장업무 보드</h1>
+        </div>
+        
+        <!-- Task Add Form -->
+        <form id="addTaskForm" class="flex gap-2 w-full sm:w-auto">
+            <input type="text" id="siteInput" list="siteOptions" placeholder="현장명 (예: 평택 신축)" required
+                   class="border border-slate-300 rounded-lg px-4 py-2 w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm">
+            <input type="text" id="taskInput" placeholder="새로운 업무 내용 입력" required
+                   class="border border-slate-300 rounded-lg px-4 py-2 flex-1 sm:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm">
+            <button type="submit" class="theme-bg-blue hover:bg-blue-900 text-white px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
+                <i data-lucide="plus" class="w-4 h-4"></i> 추가
+            </button>
+        </form>
+    </header>
+
+    <!-- 현장명 자동완성을 위한 Datalist (Firebase Sites 컬렉션과 연동됨) -->
+    <datalist id="siteOptions"></datalist>
+
+    <!-- Main Board -->
+    <main class="flex-1 overflow-x-auto p-6">
+        <div class="flex gap-5 min-w-[1100px] h-full" id="board-container">
+            
+            <!-- Column 1: 할 일 -->
+            <div style="flex: 35;" class="flex flex-col bg-slate-100/50 rounded-xl p-3 border border-slate-200">
+                <div class="bg-white text-slate-700 py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors" ondblclick="showColumnSummary('todo', '할 일')" title="더블클릭하여 목록 요약 보기">
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-slate-400"></div> 할 일</div>
+                    <span class="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-500" id="cnt-todo">0</span>
+                </div>
+                <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="todo"></div>
+            </div>
+
+            <!-- Column 2: 진행 중 -->
+            <div style="flex: 35;" class="flex flex-col bg-blue-50/50 rounded-xl p-3 border border-blue-100">
+                <div class="bg-white theme-text-blue py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-blue-200 flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-colors" ondblclick="showColumnSummary('inprogress', '진행 중')" title="더블클릭하여 목록 요약 보기">
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> 진행 중</div>
+                    <span class="text-xs bg-blue-100 px-2 py-1 rounded-full text-blue-600" id="cnt-inprogress">0</span>
+                </div>
+                <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="inprogress"></div>
+            </div>
+
+            <!-- Column 3: 보류 -->
+            <div style="flex: 15;" class="flex flex-col bg-amber-50/50 rounded-xl p-3 border border-amber-100">
+                <div class="bg-white text-amber-700 py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-amber-200 flex justify-between items-center cursor-pointer hover:bg-amber-50 transition-colors" ondblclick="showColumnSummary('hold', '보류')" title="더블클릭하여 목록 요약 보기">
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div> 보류</div>
+                    <span class="text-xs bg-amber-100 px-2 py-1 rounded-full text-amber-700" id="cnt-hold">0</span>
+                </div>
+                <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="hold"></div>
+            </div>
+
+            <!-- Column 4: 완료 -->
+            <div style="flex: 15;" class="flex flex-col bg-emerald-50/50 rounded-xl p-3 border border-emerald-100">
+                <div class="bg-white text-emerald-700 py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-emerald-200 flex justify-between items-center opacity-80 cursor-pointer hover:bg-emerald-50 transition-colors" ondblclick="showColumnSummary('done', '완료')" title="더블클릭하여 목록 요약 보기">
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> 완료</div>
+                    <span class="text-xs bg-emerald-100 px-2 py-1 rounded-full text-emerald-700" id="cnt-done">0</span>
+                </div>
+                <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="done"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 수정 모달 -->
+    <div id="editModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md m-4 transform transition-all">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-slate-800">업무 수정</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <input type="hidden" id="editTaskId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">현장명</label>
+                <input type="text" id="editSiteInput" list="siteOptions" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">업무 내용</label>
+                <textarea id="editTaskInput" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 h-28 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-5 py-2.5 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors">취소</button>
+                <button onclick="saveEdit()" class="px-5 py-2.5 theme-bg-blue text-white rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm">변경사항 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 탭 요약 보기 모달 -->
+    <div id="summaryModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg m-4 transform transition-all flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="list-todo" class="w-5 h-5 theme-text-blue"></i>
+                    <span id="summaryModalTitle">요약</span>
+                </h2>
+                <button onclick="closeSummaryModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="summaryModalContent" class="overflow-y-auto flex-1 pr-2 space-y-4"></div>
+            <div class="mt-4 pt-4 border-t flex justify-end">
+                <button onclick="closeSummaryModal()" class="px-5 py-2 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 빠른 업무 추가 모달 -->
+    <div id="quickAddModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm m-4 transform transition-all">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-bold text-slate-800">빠른 업무 추가</h2>
+                <button onclick="closeQuickAddModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <p id="quickAddSubtitle" class="text-sm font-medium theme-text-green mb-4 pb-2 border-b"></p>
+            
+            <input type="hidden" id="quickAddSite">
+            <input type="hidden" id="quickAddStatus">
+            
+            <div class="mb-5">
+                <textarea id="quickAddTaskInput" placeholder="이 현장에 추가할 업무 내용을 입력하세요" class="w-full border border-slate-300 rounded-lg px-4 py-3 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button onclick="closeQuickAddModal()" class="px-4 py-2 rounded-lg text-slate-600 font-medium hover:bg-slate-100 transition-colors text-sm">취소</button>
+                <button onclick="saveQuickAdd()" class="px-4 py-2 theme-bg-blue text-white rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-sm text-sm">추가하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 사용자 제공 Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBhY5W3WxnSscZjVaXE-dP8NEhmElSirnc",
+            authDomain: "labor-yejo-20260306.firebaseapp.com",
+            projectId: "labor-yejo-20260306",
+            storageBucket: "labor-yejo-20260306.firebasestorage.app",
+            messagingSenderId: "1063955788001",
+            appId: "1:1063955788001:web:401e863f4bce218c3787a0",
+            measurementId: "G-32WLRXQJJG"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        lucide.createIcons();
+
+        function getNow() {
+            return new Date().toISOString(); 
+        }
+
+        // 상태 데이터 (Firebase에서 실시간으로 불러옴)
+        let tasks = [];
+        let draggedTaskId = null;
+
+        const columns = document.querySelectorAll('.task-column');
+        const datalist = document.getElementById('siteOptions');
+        
+        // ---------------------------------------------------------
+        // Firebase 실시간 리스너 설정 (onSnapshot)
+        // ---------------------------------------------------------
+        
+        // 1. Tasks 컬렉션 실시간 동기화
+        onSnapshot(collection(db, 'tasks'), (snapshot) => {
+            tasks = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            renderBoard(); // 데이터가 변경될 때마다 화면 다시 그리기
+        });
+
+        // 2. Sites 컬렉션 실시간 동기화 (자동완성용)
+        onSnapshot(collection(db, 'sites'), (snapshot) => {
+            datalist.innerHTML = '';
+            // 현장명 오름차순 정렬을 위해 배열로 변환 후 정렬
+            const sitesData = snapshot.docs.map(doc => doc.data().name).sort();
+            sitesData.forEach(siteName => {
+                const option = document.createElement('option');
+                option.value = siteName;
+                datalist.appendChild(option);
+            });
+        });
+
+        // ---------------------------------------------------------
+        // DB 쓰기 함수들
+        // ---------------------------------------------------------
+
+        // [핵심] 현장명이 'sites' DB에 없으면 추가하는 함수
+        async function ensureSiteExists(siteName) {
+            const cleanSiteName = siteName.trim();
+            if(!cleanSiteName) return;
+            // setDoc에 { merge: true }를 쓰면, 이미 존재하면 덮어쓰지 않고 넘어감(또는 합침)
+            await setDoc(doc(db, 'sites', cleanSiteName), { 
+                name: cleanSiteName,
+                lastUsedAt: getNow()
+            }, { merge: true });
+        }
+
+        async function addTask(site, title) {
+            const now = getNow();
+            await ensureSiteExists(site); // sites DB 업데이트
+            
+            await addDoc(collection(db, 'tasks'), {
+                site: site.trim(),
+                title: title.trim(),
+                status: 'todo',
+                createdAt: now,
+                updatedAt: now,
+                statusChangedAt: now
+            });
+            // onSnapshot이 변경을 감지하므로 renderBoard() 수동 호출 불필요
+        }
+
+        async function updateTaskStatus(taskId, newStatus) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.status !== newStatus) {
+                const now = getNow();
+                await updateDoc(doc(db, 'tasks', taskId), { 
+                    status: newStatus, 
+                    statusChangedAt: now, 
+                    updatedAt: now 
+                });
+            }
+        }
+
+        async function updateGroupStatus(siteName, fromStatus, toStatus) {
+            if (fromStatus === toStatus) return;
+            
+            const now = getNow();
+            const batch = writeBatch(db); // 여러 문서를 한 번에 업데이트하기 위해 Batch 사용
+            let hasUpdates = false;
+
+            tasks.forEach(task => {
+                if (task.site === siteName && task.status === fromStatus) {
+                    const taskRef = doc(db, 'tasks', task.id);
+                    batch.update(taskRef, {
+                        status: toStatus,
+                        statusChangedAt: now,
+                        updatedAt: now
+                    });
+                    hasUpdates = true;
+                }
+            });
+            
+            if (hasUpdates) {
+                await batch.commit(); // DB에 일괄 적용
+            }
+        }
+
+        async function updateTaskData(taskId, newSite, newTitle) {
+            await ensureSiteExists(newSite); // 변경된 현장명도 sites DB에 추가
+            
+            await updateDoc(doc(db, 'tasks', taskId), { 
+                site: newSite.trim(), 
+                title: newTitle.trim(), 
+                updatedAt: getNow() 
+            });
+        }
+
+        async function deleteTask(taskId) {
+            if(confirm('이 업무를 삭제하시겠습니까?')) {
+                await deleteDoc(doc(db, 'tasks', taskId));
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 렌더링 로직
+        // ---------------------------------------------------------
+        function renderBoard() {
+            const counts = { todo: 0, inprogress: 0, hold: 0, done: 0 };
+
+            columns.forEach(col => {
+                col.innerHTML = '';
+                const status = col.dataset.status;
+                
+                const colTasks = tasks.filter(t => t.status === status);
+                counts[status] = colTasks.length;
+                
+                const groupedTasks = colTasks.reduce((acc, task) => {
+                    if (!acc[task.site]) acc[task.site] = [];
+                    acc[task.site].push(task);
+                    return acc;
+                }, {});
+
+                Object.keys(groupedTasks).sort().forEach(siteName => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'bg-white border-t-4 theme-border-green rounded-lg shadow-sm mb-3 overflow-hidden cursor-grab active:cursor-grabbing';
+                    groupDiv.draggable = true;
+
+                    groupDiv.addEventListener('dragstart', function(e) {
+                        e.stopPropagation(); 
+                        this.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', `group:${siteName}:${status}`);
+                    });
+
+                    groupDiv.addEventListener('dragend', function(e) {
+                        this.classList.remove('dragging');
+                        columns.forEach(col => col.classList.remove('drag-over'));
+                    });
+                    
+                    const groupHeader = document.createElement('div');
+                    groupHeader.className = 'bg-slate-50 border-b border-slate-100 py-1.5 px-3 flex justify-between items-center';
+                    groupHeader.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 theme-text-green"></i>
+                            <span class="theme-text-green font-bold text-[13px] tracking-wide">${siteName}</span>
+                        </div>
+                        <button onclick="openQuickAddModal('${siteName}', '${status}')" class="text-slate-400 hover:text-blue-600 p-1 rounded transition-colors" title="이 현장에 빠른 추가">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    groupDiv.appendChild(groupHeader);
+
+                    const taskListDiv = document.createElement('div');
+                    taskListDiv.className = 'p-2 flex flex-col gap-2 min-h-[30px]';
+
+                    groupedTasks[siteName].forEach(task => {
+                        const taskCard = document.createElement('div');
+                        taskCard.className = 'task-card bg-slate-700 text-white p-3 text-sm rounded-md cursor-grab active:cursor-grabbing shadow flex justify-between items-start group relative border border-slate-600 hover:bg-slate-800';
+                        
+                        if(status === 'done') {
+                            taskCard.className = 'task-card bg-emerald-700/80 text-white p-3 text-sm rounded-md cursor-grab active:cursor-grabbing shadow flex justify-between items-start group relative border border-emerald-600/50 hover:bg-emerald-800/80';
+                        }
+                        
+                        taskCard.draggable = true;
+                        taskCard.dataset.id = task.id;
+                        
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'flex-1 pr-12 pointer-events-none leading-snug';
+                        contentDiv.textContent = task.title;
+                        
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded p-1 backdrop-blur-sm';
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'p-1 text-slate-200 hover:text-white hover:bg-white/20 rounded transition-colors';
+                        editBtn.innerHTML = '<i data-lucide="pen-line" class="w-3.5 h-3.5"></i>';
+                        editBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            openEditModal(task);
+                        };
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'p-1 text-slate-200 hover:text-red-400 hover:bg-white/20 rounded transition-colors';
+                        deleteBtn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>';
+                        deleteBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            deleteTask(task.id);
+                        };
+
+                        actionsDiv.appendChild(editBtn);
+                        actionsDiv.appendChild(deleteBtn);
+                        taskCard.appendChild(contentDiv);
+                        taskCard.appendChild(actionsDiv);
+
+                        taskCard.addEventListener('dragstart', handleDragStart);
+                        taskCard.addEventListener('dragend', handleDragEnd);
+
+                        taskListDiv.appendChild(taskCard);
+                    });
+
+                    groupDiv.appendChild(taskListDiv);
+                    col.appendChild(groupDiv);
+                });
+            });
+
+            document.getElementById('cnt-todo').textContent = counts.todo;
+            document.getElementById('cnt-inprogress').textContent = counts.inprogress;
+            document.getElementById('cnt-hold').textContent = counts.hold;
+            document.getElementById('cnt-done').textContent = counts.done;
+
+            lucide.createIcons();
+        }
+
+        // ---------------------------------------------------------
+        // 드래그 앤 드롭 및 이벤트 핸들러
+        // ---------------------------------------------------------
+        function handleDragStart(e) {
+            e.stopPropagation(); 
+            draggedTaskId = this.dataset.id;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', `card:${this.dataset.id}`);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            columns.forEach(col => col.classList.remove('drag-over'));
+            draggedTaskId = null;
+        }
+
+        columns.forEach(col => {
+            col.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                col.classList.add('drag-over');
+            });
+
+            col.addEventListener('dragleave', e => {
+                col.classList.remove('drag-over');
+            });
+
+            col.addEventListener('drop', e => {
+                e.preventDefault();
+                col.classList.remove('drag-over');
+                
+                const data = e.dataTransfer.getData('text/plain');
+                const newStatus = col.dataset.status;
+                
+                if (data && newStatus) {
+                    if (data.startsWith('card:')) {
+                        const taskId = data.split(':')[1];
+                        updateTaskStatus(taskId, newStatus);
+                    } else if (data.startsWith('group:')) {
+                        const parts = data.split(':');
+                        const siteName = parts[1];
+                        const fromStatus = parts[2];
+                        updateGroupStatus(siteName, fromStatus, newStatus);
+                    }
+                }
+            });
+        });
+
+        document.getElementById('addTaskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const site = document.getElementById('siteInput').value;
+            const task = document.getElementById('taskInput').value;
+            
+            if (site && task) {
+                addTask(site, task);
+                document.getElementById('taskInput').value = '';
+                document.getElementById('taskInput').focus();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape') {
+                if(!document.getElementById('editModal').classList.contains('hidden')) window.closeModal();
+                if(!document.getElementById('summaryModal').classList.contains('hidden')) window.closeSummaryModal();
+                if(!document.getElementById('quickAddModal').classList.contains('hidden')) window.closeQuickAddModal();
+            }
+        });
+
+        // ---------------------------------------------------------
+        // 전역 (Global) 접근 설정 - HTML onClick 속성에서 호출하기 위함
+        // ---------------------------------------------------------
+        window.openEditModal = function(task) {
+            document.getElementById('editTaskId').value = task.id;
+            document.getElementById('editSiteInput').value = task.site;
+            document.getElementById('editTaskInput').value = task.title;
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editTaskInput').focus();
+        };
+
+        window.closeModal = function() {
+            document.getElementById('editModal').classList.add('hidden');
+        };
+
+        window.saveEdit = function() {
+            const id = document.getElementById('editTaskId').value;
+            const site = document.getElementById('editSiteInput').value;
+            const title = document.getElementById('editTaskInput').value;
+            if(id && site && title) {
+                updateTaskData(id, site, title);
+                window.closeModal();
+            } else {
+                alert('현장명과 업무 내용을 모두 입력해주세요.');
+            }
+        };
+
+        window.showColumnSummary = function(status, statusName) {
+            const modal = document.getElementById('summaryModal');
+            const contentEl = document.getElementById('summaryModalContent');
+            document.getElementById('summaryModalTitle').textContent = `${statusName} 전체 요약`;
+            contentEl.innerHTML = ''; 
+
+            const colTasks = tasks.filter(t => t.status === status);
+            
+            if (colTasks.length === 0) {
+                contentEl.innerHTML = '<div class="text-center py-8 text-slate-500">등록된 업무가 없습니다.</div>';
+            } else {
+                const grouped = colTasks.reduce((acc, task) => {
+                    if (!acc[task.site]) acc[task.site] = [];
+                    acc[task.site].push(task);
+                    return acc;
+                }, {});
+
+                Object.keys(grouped).sort().forEach(site => {
+                    const siteDiv = document.createElement('div');
+                    siteDiv.className = 'mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100';
+                    siteDiv.innerHTML = `<h3 class="font-bold theme-text-green mb-2 flex items-center gap-1 text-sm border-b pb-1"><i data-lucide="building" class="w-4 h-4"></i> ${site} <span class="text-slate-400 text-xs font-normal ml-1">(${grouped[site].length}건)</span></h3>`;
+                    
+                    const ul = document.createElement('ul');
+                    ul.className = 'list-disc list-inside space-y-1 text-sm text-slate-700 ml-1';
+                    grouped[site].forEach(task => {
+                        const li = document.createElement('li');
+                        li.textContent = task.title;
+                        ul.appendChild(li);
+                    });
+                    
+                    siteDiv.appendChild(ul);
+                    contentEl.appendChild(siteDiv);
+                });
+            }
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.closeSummaryModal = function() {
+            document.getElementById('summaryModal').classList.add('hidden');
+        };
+
+        window.openQuickAddModal = function(site, status) {
+            document.getElementById('quickAddSite').value = site;
+            document.getElementById('quickAddStatus').value = status;
+            const statusNames = { todo: '할 일', inprogress: '진행 중', hold: '보류', done: '완료' };
+            document.getElementById('quickAddSubtitle').innerHTML = `<strong>${site}</strong> <span class="text-slate-400 text-xs ml-1">상태: ${statusNames[status]}</span>`;
+            
+            const taskInput = document.getElementById('quickAddTaskInput');
+            taskInput.value = '';
+            document.getElementById('quickAddModal').classList.remove('hidden');
+            setTimeout(() => taskInput.focus(), 100);
+        };
+
+        window.closeQuickAddModal = function() {
+            document.getElementById('quickAddModal').classList.add('hidden');
+        };
+
+        window.saveQuickAdd = async function() {
+            const site = document.getElementById('quickAddSite').value;
+            const status = document.getElementById('quickAddStatus').value;
+            const title = document.getElementById('quickAddTaskInput').value.trim();
+
+            if (title) {
+                const now = getNow();
+                await ensureSiteExists(site); // sites DB 업데이트
+                
+                await addDoc(collection(db, 'tasks'), {
+                    site: site,
+                    title: title,
+                    status: status,
+                    createdAt: now,
+                    updatedAt: now,
+                    statusChangedAt: now
+                });
+                
+                window.closeQuickAddModal();
+            } else {
+                alert('업무 내용을 입력해주세요.');
+            }
+        };
+
+    </script>
+</body>
+</html>
