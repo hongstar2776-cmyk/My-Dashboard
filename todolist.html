@@ -80,7 +80,10 @@
             <!-- Column 3: 보류 -->
             <div style="flex: 15;" class="flex flex-col bg-amber-50/50 rounded-xl p-3 border border-amber-100">
                 <div class="bg-white text-amber-700 py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-amber-200 flex justify-between items-center cursor-pointer hover:bg-amber-50 transition-colors" ondblclick="showColumnSummary('hold', '보류')" title="더블클릭하여 목록 요약 보기">
-                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div> 보류</div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-amber-500"></div> 보류
+                        <button id="btn-toggle-hold" onclick="toggleView(event, 'hold')" class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 ml-1 transition-colors hidden">전체보기</button>
+                    </div>
                     <span class="text-xs bg-amber-100 px-2 py-1 rounded-full text-amber-700" id="cnt-hold">0</span>
                 </div>
                 <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="hold"></div>
@@ -89,7 +92,10 @@
             <!-- Column 4: 완료 -->
             <div style="flex: 15;" class="flex flex-col bg-emerald-50/50 rounded-xl p-3 border border-emerald-100">
                 <div class="bg-white text-emerald-700 py-3 px-4 rounded-lg font-bold mb-4 shadow-sm border border-emerald-200 flex justify-between items-center opacity-80 cursor-pointer hover:bg-emerald-50 transition-colors" ondblclick="showColumnSummary('done', '완료')" title="더블클릭하여 목록 요약 보기">
-                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> 완료</div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div> 완료
+                        <button id="btn-toggle-done" onclick="toggleView(event, 'done')" class="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 ml-1 transition-colors hidden">전체보기</button>
+                    </div>
                     <span class="text-xs bg-emerald-100 px-2 py-1 rounded-full text-emerald-700" id="cnt-done">0</span>
                 </div>
                 <div class="flex-1 overflow-y-auto rounded-lg border-2 border-dashed border-transparent transition-colors p-1 task-column" data-status="done"></div>
@@ -201,6 +207,7 @@
         // 상태 데이터 (Firebase에서 실시간으로 불러옴)
         let tasks = [];
         let draggedTaskId = null;
+        let viewState = { hold: false, done: false }; // 보류, 완료 탭의 전체보기 상태
 
         const columns = document.querySelectorAll('.task-column');
         const datalist = document.getElementById('siteOptions');
@@ -322,9 +329,31 @@
                 col.innerHTML = '';
                 const status = col.dataset.status;
                 
-                const colTasks = tasks.filter(t => t.status === status);
-                counts[status] = colTasks.length;
+                let colTasks = tasks.filter(t => t.status === status);
+                counts[status] = colTasks.length; // 뱃지에는 전체 개수 표시
                 
+                // --- 최근 20개 / 전체보기 필터링 로직 ---
+                const MAX_VISIBLE = 2; // ★ 버튼 UI 확인을 위해 임시로 2개로 줄였습니다. 나중에 20으로 변경하세요!
+                if (status === 'hold' || status === 'done') {
+                    const btn = document.getElementById(`btn-toggle-${status}`);
+                    if (btn) {
+                        if (counts[status] > MAX_VISIBLE) {
+                            btn.style.display = 'inline-block';
+                            btn.classList.remove('hidden');
+                            btn.textContent = viewState[status] ? '접기' : '전체보기';
+                        } else {
+                            btn.style.display = 'none';
+                            btn.classList.add('hidden');
+                        }
+                    }
+                    
+                    if (!viewState[status] && counts[status] > MAX_VISIBLE) {
+                        // 이동 시간(statusChangedAt) 기준 내림차순 정렬 후 20개 추출
+                        colTasks.sort((a, b) => new Date(b.statusChangedAt) - new Date(a.statusChangedAt));
+                        colTasks = colTasks.slice(0, MAX_VISIBLE);
+                    }
+                }
+
                 const groupedTasks = colTasks.reduce((acc, task) => {
                     if (!acc[task.site]) acc[task.site] = [];
                     acc[task.site].push(task);
@@ -574,6 +603,12 @@
 
         window.closeQuickAddModal = function() {
             document.getElementById('quickAddModal').classList.add('hidden');
+        };
+
+        window.toggleView = function(e, status) {
+            e.stopPropagation(); // 부모의 더블클릭 이벤트가 실행되지 않도록 방지
+            viewState[status] = !viewState[status];
+            renderBoard(); // 화면 다시 그리기 (20개 ↔ 전체)
         };
 
         window.saveQuickAdd = async function() {
