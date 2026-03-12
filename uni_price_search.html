@@ -230,7 +230,7 @@
                         total: row[7] || '0',
                         refNumber: rawRefNumber,
                         category: category,             // 추가: 호표 번호 앞 2자리 (구분용)
-                        remark: row[14] || '',          // 추가: O열 비고 데이터 (인덱스 14)
+                        remark: row[9] || '',          // 추가: J열 비고 데이터 (인덱스 9)
                         searchIndex: row.join(' ').toLowerCase()
                     };
                 } else if (tableName === 'unitPriceDetail') {
@@ -718,3 +718,4 @@
     </script>
 </body>
 </html>
+
