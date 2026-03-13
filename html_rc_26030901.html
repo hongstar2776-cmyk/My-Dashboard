@@ -65,7 +65,6 @@
         <!-- Left Panel : Inputs -->
         <section class="w-full lg:w-1/2 flex flex-col gap-4">
             
-            <!-- Input Form Card -->
             <div class="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden flex-grow">
                 <!-- Tabs -->
                 <div class="flex border-b border-slate-200 bg-slate-50">
@@ -88,6 +87,8 @@
                                 <option value="24">24</option>
                                 <option value="27">27</option>
                                 <option value="30">30</option>
+                                <option value="35">35</option>
+                                <option value="40">40</option>
                             </select>
                         </div>
                     </div>
@@ -97,11 +98,11 @@
                         <div class="flex flex-wrap items-center gap-3 mb-2">
                             <div class="flex items-center">
                                 <label class="text-sm font-bold text-slate-700 mr-2">부재명:</label>
-                                <input type="text" id="slab-name" value="S1" class="border border-slate-300 rounded px-2 py-1 text-sm w-24">
+                                <input type="text" id="slab-name" value="S1" class="border border-slate-300 rounded px-2 py-1 text-sm w-24 outline-none focus:border-blue-400">
                             </div>
                             <div class="flex items-center">
                                 <label class="text-sm font-bold text-slate-700 mr-2">특성:</label>
-                                <select id="slab-type" class="border border-slate-300 rounded px-2 py-1 text-sm">
+                                <select id="slab-type" class="border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-400">
                                     <option value="기초" selected>기초</option>
                                     <option value="슬래브">슬래브</option>
                                 </select>
@@ -129,15 +130,15 @@
                         <div class="grid grid-cols-3 gap-3">
                             <div>
                                 <label id="label-slab-w" class="block text-xs text-slate-500 mb-1">가로길이/X열길이(mm)</label>
-                                <input type="number" id="slab-w" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 5000">
+                                <input type="number" id="slab-w" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 5000">
                             </div>
                             <div>
                                 <label id="label-slab-l" class="block text-xs text-slate-500 mb-1">세로길이/Y열길이(mm)</label>
-                                <input type="number" id="slab-l" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 6000">
+                                <input type="number" id="slab-l" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 6000">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-500 mb-1">두께(mm)</label>
-                                <input type="number" id="slab-t" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 300">
+                                <input type="number" id="slab-t" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 300">
                             </div>
                         </div>
 
@@ -147,30 +148,30 @@
                                 <!-- X1 -->
                                 <div class="flex gap-2 items-center">
                                     <span class="w-12 text-xs font-bold">X1(하)</span>
-                                    <select id="slab-x1-size" class="border border-slate-300 rounded px-2 py-1 text-sm rebar-size-sel"></select>
-                                    <select id="slab-x1-grade" class="border border-slate-300 rounded px-2 py-1 text-sm"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
-                                    <input type="number" id="slab-x1-space" class="w-full border border-slate-300 rounded px-2 py-1 text-sm" placeholder="간격(mm)">
+                                    <select id="slab-x1-size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] rebar-size-sel outline-none focus:border-blue-400"></select>
+                                    <select id="slab-x1-grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
+                                    <input type="number" id="slab-x1-space" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="간격(mm)">
                                 </div>
                                 <!-- Y1 -->
                                 <div class="flex gap-2 items-center">
                                     <span class="w-12 text-xs font-bold">Y1(하)</span>
-                                    <select id="slab-y1-size" class="border border-slate-300 rounded px-2 py-1 text-sm rebar-size-sel"></select>
-                                    <select id="slab-y1-grade" class="border border-slate-300 rounded px-2 py-1 text-sm"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
-                                    <input type="number" id="slab-y1-space" class="w-full border border-slate-300 rounded px-2 py-1 text-sm" placeholder="간격(mm)">
+                                    <select id="slab-y1-size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] rebar-size-sel outline-none focus:border-blue-400"></select>
+                                    <select id="slab-y1-grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
+                                    <input type="number" id="slab-y1-space" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="간격(mm)">
                                 </div>
                                 <!-- X2 -->
                                 <div class="flex gap-2 items-center">
                                     <span class="w-12 text-xs font-bold text-blue-700">X2(상)</span>
-                                    <select id="slab-x2-size" class="border border-slate-300 rounded px-2 py-1 text-sm rebar-size-sel"></select>
-                                    <select id="slab-x2-grade" class="border border-slate-300 rounded px-2 py-1 text-sm"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
-                                    <input type="number" id="slab-x2-space" class="w-full border border-slate-300 rounded px-2 py-1 text-sm" placeholder="간격(mm)">
+                                    <select id="slab-x2-size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] rebar-size-sel outline-none focus:border-blue-400"></select>
+                                    <select id="slab-x2-grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
+                                    <input type="number" id="slab-x2-space" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="간격(mm)">
                                 </div>
                                 <!-- Y2 -->
                                 <div class="flex gap-2 items-center">
                                     <span class="w-12 text-xs font-bold text-blue-700">Y2(상)</span>
-                                    <select id="slab-y2-size" class="border border-slate-300 rounded px-2 py-1 text-sm rebar-size-sel"></select>
-                                    <select id="slab-y2-grade" class="border border-slate-300 rounded px-2 py-1 text-sm"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
-                                    <input type="number" id="slab-y2-space" class="w-full border border-slate-300 rounded px-2 py-1 text-sm" placeholder="간격(mm)">
+                                    <select id="slab-y2-size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] rebar-size-sel outline-none focus:border-blue-400"></select>
+                                    <select id="slab-y2-grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400"><option value="SD400" selected>SD400</option><option value="SD500">SD500</option></select>
+                                    <input type="number" id="slab-y2-space" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="간격(mm)">
                                 </div>
                             </div>
                         </div>
@@ -184,19 +185,19 @@
                         <div class="flex flex-wrap items-center gap-3 mb-2">
                             <div class="flex items-center">
                                 <label class="text-sm font-bold text-slate-700 mr-2">부재명:</label>
-                                <input type="text" id="beam-name" value="G1" class="border border-slate-300 rounded px-2 py-1 text-sm w-20">
+                                <input type="text" id="beam-name" value="G1" class="border border-slate-300 rounded px-2 py-1 text-sm w-20 outline-none focus:border-blue-400">
                             </div>
                             <div class="flex items-center">
                                 <label class="text-sm font-bold text-slate-700 mr-2">배근 형태:</label>
-                                <select id="beam-type" class="border border-slate-300 rounded px-2 py-1 text-sm bg-yellow-50 font-bold" onchange="renderBeamInputs()">
+                                <select id="beam-type" class="border border-slate-300 rounded px-2 py-1 text-sm bg-yellow-50 font-bold outline-none focus:border-blue-400" onchange="renderBeamInputs()">
                                     <option value="전단형" selected>전단형</option>
                                     <option value="양단중앙형">양단중앙형</option>
                                     <option value="내중외단형">내중외단형</option>
                                 </select>
                             </div>
                             <div class="flex items-center bg-orange-50 px-2 py-1.5 rounded border border-orange-200">
-                                <label class="text-xs font-bold text-orange-800 mr-1">연결슬래브 두께(mm):</label>
-                                <input type="number" id="beam-tslab" value="0" class="border border-orange-300 rounded px-1 py-0.5 w-16 text-center text-orange-800 font-bold outline-none">
+                                <label class="text-xs font-bold text-orange-800 mr-1">연결슬래브(mm):</label>
+                                <input type="number" id="beam-tslab" value="0" class="border border-orange-300 rounded px-1 py-0.5 w-14 text-center text-orange-800 font-bold outline-none">
                             </div>
                             
                             <div class="flex items-center bg-blue-50 px-2 py-1.5 rounded border border-blue-200 ml-auto gap-2 text-xs">
@@ -210,24 +211,22 @@
                         <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded border border-slate-200">
                             <div>
                                 <label class="block text-xs text-slate-500 mb-1">단면 폭(W) mm</label>
-                                <input type="number" id="beam-w" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 400">
+                                <input type="number" id="beam-w" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 400">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-500 mb-1">단면 높이(H) mm</label>
-                                <input type="number" id="beam-h" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 600">
+                                <input type="number" id="beam-h" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 600">
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-500 mb-1">길이(L) mm</label>
-                                <input type="number" id="beam-l" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm" placeholder="예: 8000">
+                                <input type="number" id="beam-l" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400" placeholder="예: 8000">
                             </div>
                         </div>
 
                         <div class="border-t border-slate-200 pt-4 mt-2">
                             <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-layer-group mr-1"></i> 형태별 주근 및 늑근 배근</h4>
-                            
-                            <!-- 구간별 세로 나열 레이아웃이 적용될 동적 컨테이너 -->
                             <div id="beam-dynamic-inputs" class="grid gap-4 grid-cols-1">
-                                <!-- JS will inject inputs here based on beam-type -->
+                                <!-- JS Injected -->
                             </div>
                         </div>
                         <button onclick="addBeam()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded transition mt-4">
@@ -262,7 +261,7 @@
                                     <th class="px-4 py-3 font-bold">부재명</th>
                                     <th class="px-4 py-3 font-bold text-right" title="더블클릭하여 산출식 확인">레미콘(m³) <i class="fa-solid fa-hand-pointer text-slate-400 text-xs"></i></th>
                                     <th class="px-4 py-3 font-bold text-right" title="더블클릭하여 산출식 확인">거푸집(m²) <i class="fa-solid fa-hand-pointer text-slate-400 text-xs"></i></th>
-                                    <th class="px-4 py-3 font-bold text-right" title="더블클릭하여 산출식 확인">철근총중량(kg) <i class="fa-solid fa-hand-pointer text-slate-400 text-xs"></i></th>
+                                    <th class="px-4 py-3 font-bold text-right" title="더블클릭하여 산출식 확인">철근(kg) <i class="fa-solid fa-hand-pointer text-slate-400 text-xs"></i></th>
                                     <th class="px-4 py-3 font-bold text-center">작업</th>
                                 </tr>
                             </thead>
@@ -287,29 +286,23 @@
             <div class="mt-4 bg-white rounded-lg shadow-sm border border-slate-200 p-4 space-y-4">
                 <div>
                     <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-cubes mr-1 text-slate-500"></i> 레미콘 규격별 총합 (로스율 반영)</h3>
-                    <div id="conc-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
-                        데이터 없음
-                    </div>
+                    <div id="conc-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">데이터 없음</div>
                 </div>
                 <div class="border-t border-slate-100 pt-3">
                     <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-border-all mr-1 text-amber-600"></i> 거푸집 총합 (로스율 반영)</h3>
-                    <div id="form-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
-                        데이터 없음
-                    </div>
+                    <div id="form-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">데이터 없음</div>
                 </div>
                 <div class="border-t border-slate-100 pt-3">
                     <h3 class="text-sm font-bold text-slate-700 mb-2"><i class="fa-solid fa-bars-staggered mr-1 text-blue-600"></i> 철근 규격별 총합 (로스율 반영)</h3>
-                    <div id="rebar-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">
-                        데이터 없음
-                    </div>
+                    <div id="rebar-summary" class="flex flex-wrap gap-2 text-sm text-slate-600">데이터 없음</div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Formula Modal (Message Box) -->
-    <div id="formula-modal" class="fixed inset-0 bg-slate-900 bg-opacity-40 hidden flex items-center justify-center z-50">
+    <!-- Formula Modal (Double Click View) -->
+    <div id="formula-modal" class="fixed inset-0 bg-slate-900 bg-opacity-40 hidden flex items-center justify-center z-[70]">
         <div class="bg-white rounded-lg shadow-xl w-[600px] max-w-[90%] flex flex-col max-h-[80vh]">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
                 <h3 id="modal-title" class="font-bold text-lg text-slate-800"><i class="fa-solid fa-square-root-variable mr-2 text-blue-600"></i>산출식 확인</h3>
@@ -320,6 +313,23 @@
             </div>
             <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 rounded-b-lg text-right">
                 <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded shadow transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div id="edit-item-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden flex items-center justify-center z-[60]">
+        <div class="bg-white rounded-lg shadow-xl w-[550px] max-w-[95%] flex flex-col max-h-[90vh]">
+            <div class="px-5 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+                <h3 id="edit-modal-title" class="font-bold text-slate-800"><i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>항목 수정</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto bg-slate-50" id="edit-modal-body">
+                <!-- Injected via JS -->
+            </div>
+            <div class="px-5 py-3 border-t border-slate-200 bg-white rounded-b-lg flex justify-end gap-2">
+                <button onclick="closeEditModal()" class="px-4 py-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-100 transition text-sm font-bold">취소</button>
+                <button onclick="saveEdit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow transition text-sm font-bold">수정 완료</button>
             </div>
         </div>
     </div>
@@ -359,6 +369,7 @@
         ];
 
         let calculatedItems = [];
+        let currentEditId = null;
 
         window.onload = function() {
             populateRebarSelects();
@@ -430,74 +441,168 @@
             }
         }
 
-        // 구간별 세로형 배근 폼 (구간 박스 안에 철근 종류 나열)
-        function renderBeamInputs() {
-            const beamType = document.getElementById('beam-type').value;
-            const container = document.getElementById('beam-dynamic-inputs');
-            const zones = BEAM_TYPES_CONFIG[beamType];
-            
-            // 항상 세로로 나열되도록 1열(grid-cols-1)로 고정합니다.
-            container.className = `grid gap-4 grid-cols-1`;
-            
-            let html = '';
-            const sizeOptions = Object.keys(REBAR_DATA).map(t => `<option value="${t}" ${t==='HD13'?'selected':''}>${t}</option>`).join('');
-            const gradeOptions = `<option value="SD400" selected>SD400</option><option value="SD500">SD500</option>`;
-
-            zones.forEach(zone => {
-                html += `<div class="p-3 border rounded ${zone.bg} ${zone.border} shadow-sm space-y-2">`;
-                html += `<div class="font-bold text-slate-700 border-b border-slate-300 pb-1 mb-2 text-center">${zone.label} 구간</div>`;
-                
-                BAR_TYPES.forEach(bar => {
-                    const inputId = `beam_${zone.id}_${bar.id}`;
-                    html += `
-                        <div class="flex gap-1 items-center">
-                            <span class="w-14 text-xs font-bold text-slate-600 tracking-tighter">${bar.label}</span>
-                            <select id="${inputId}_size" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">${sizeOptions}</select>
-                            <select id="${inputId}_grade" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">${gradeOptions}</select>
-                            <input type="number" id="${inputId}_val" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="${bar.unit}">
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            });
-            container.innerHTML = html;
+        function toggleEditSlabShape() {
+            const shape = document.querySelector('input[name="edit-slab-shape"]:checked').value;
+            const labelW = document.getElementById('label-edit-slab-w');
+            const labelL = document.getElementById('label-edit-slab-l');
+            if(!labelW || !labelL) return;
+            if (shape === 'tri') {
+                labelW.innerText = "밑변 길이 (mm)"; labelL.innerText = "높이 길이 (mm)";
+            } else {
+                labelW.innerText = "가로길이(mm)"; labelL.innerText = "세로길이(mm)";
+            }
         }
 
-        function showFormulaModal(title, content) {
+        function openFormulaModal(id, type) {
+            const item = calculatedItems.find(i => i.id === id);
+            if(!item) return;
+
+            let title = '';
+            let content = '';
+
+            if (type === 'conc') {
+                title = `레미콘 산출식 (${item.name})`;
+                content = item.formulas.conc;
+            } else if (type === 'form') {
+                title = `거푸집 산출식 (${item.name})`;
+                content = item.formulas.form;
+            } else if (type === 'rebar') {
+                title = `철근 상세 산출식 (${item.name})`;
+                content = item.formulas.details + '\n\n' + item.formulas.rebar;
+            }
+
             document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-square-root-variable mr-2 text-blue-600"></i>${title}`;
             document.getElementById('modal-content').innerText = content;
             document.getElementById('formula-modal').classList.remove('hidden');
         }
 
-        function closeModal() { document.getElementById('formula-modal').classList.add('hidden'); }
+        function closeModal() {
+            document.getElementById('formula-modal').classList.add('hidden');
+        }
 
-        // --- Calculate Functions ---
+        function renderBeamInputs() {
+            const beamType = document.getElementById('beam-type').value;
+            const container = document.getElementById('beam-dynamic-inputs');
+            container.className = `grid gap-4 grid-cols-1`;
+            container.innerHTML = generateDynamicBeamHTML('', beamType, null);
+        }
+
+        function renderEditBeamInputs(prefillRebars = null) {
+            const beamType = document.getElementById('edit-beam-type').value;
+            const container = document.getElementById('edit-beam-dynamic-inputs');
+            container.innerHTML = generateDynamicBeamHTML('edit-', beamType, prefillRebars);
+        }
+
+        // --- Helpers for dynamic HTML ---
+        function buildRebarSizeSelect(id, selVal = 'HD13') {
+            return `<select id="${id}" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">` +
+                   Object.keys(REBAR_DATA).map(t => `<option value="${t}" ${t===selVal?'selected':''}>${t}</option>`).join('') +
+                   `</select>`;
+        }
+        function buildGradeSelect(id, selVal = 'SD400') {
+            return `<select id="${id}" class="border border-slate-300 rounded px-1 py-1 text-xs w-[75px] outline-none focus:border-blue-400">
+                        <option value="SD400" ${selVal==='SD400'?'selected':''}>SD400</option>
+                        <option value="SD500" ${selVal==='SD500'?'selected':''}>SD500</option>
+                    </select>`;
+        }
+        function buildFckSelect(id, selVal = '21') {
+             return `<select id="${id}" class="border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-400 w-24">
+                        <option value="18" ${selVal==='18'?'selected':''}>18</option>
+                        <option value="21" ${selVal==='21'?'selected':''}>21</option>
+                        <option value="24" ${selVal==='24'?'selected':''}>24</option>
+                        <option value="27" ${selVal==='27'?'selected':''}>27</option>
+                        <option value="30" ${selVal==='30'?'selected':''}>30</option>
+                        <option value="35" ${selVal==='35'?'selected':''}>35</option>
+                        <option value="40" ${selVal==='40'?'selected':''}>40</option>
+                    </select>`;
+        }
+
+        function generateDynamicBeamHTML(prefix, beamType, prefillRebars) {
+            const zones = BEAM_TYPES_CONFIG[beamType];
+            let html = '';
+            zones.forEach(zone => {
+                html += `<div class="p-3 border rounded ${zone.bg} ${zone.border} shadow-sm space-y-2">`;
+                html += `<div class="font-bold text-slate-700 border-b border-slate-300 pb-1 mb-2 text-center text-sm">${zone.label} 구간</div>`;
+                BAR_TYPES.forEach(bar => {
+                    const inputId = `${prefix}beam_${zone.id}_${bar.id}`;
+                    const key = `${zone.id}_${bar.id}`;
+                    const sVal = prefillRebars && prefillRebars[key] ? prefillRebars[key].s : 'HD13';
+                    const gVal = prefillRebars && prefillRebars[key] ? prefillRebars[key].g : 'SD400';
+                    const vVal = prefillRebars && prefillRebars[key] && prefillRebars[key].v !== 0 ? prefillRebars[key].v : '';
+
+                    html += `
+                        <div class="flex gap-1 items-center">
+                            <span class="w-16 text-xs font-bold text-slate-600 tracking-tighter">${bar.label}</span>
+                            ${buildRebarSizeSelect(`${inputId}_size`, sVal)}
+                            ${buildGradeSelect(`${inputId}_grade`, gVal)}
+                            <input type="number" id="${inputId}_val" value="${vVal}" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="${bar.unit}">
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            });
+            return html;
+        }
+
+        // --- Extractor Functions ---
         function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
         function getStr(id) { return document.getElementById(id).value || ""; }
 
-        function addSlab() {
-            const name = getStr('slab-name');
-            const type = getStr('slab-type');
-            
-            const lossConc = 1 + (getVal('slab-loss-conc') / 100);
-            const lossForm = 1 + (getVal('slab-loss-form') / 100);
-            const lossRebar = 1 + (getVal('slab-loss-rebar') / 100);
-            
-            const shape = document.querySelector('input[name="slab-shape"]:checked').value;
-            const w = getVal('slab-w'); 
-            const l = getVal('slab-l'); 
-            const t = getVal('slab-t'); 
-            const fck = getStr('global-fck');
+        function getSlabRawInputs(prefix = '') {
+            const shapeInput = document.querySelector(`input[name="${prefix ? prefix : ''}slab-shape"]:checked`);
+            return {
+                name: getStr(`${prefix}slab-name`),
+                type: getStr(`${prefix}slab-type`),
+                shape: shapeInput ? shapeInput.value : 'rect',
+                lossConc: getVal(`${prefix}slab-loss-conc`),
+                lossForm: getVal(`${prefix}slab-loss-form`),
+                lossRebar: getVal(`${prefix}slab-loss-rebar`),
+                fck: getStr(prefix ? `${prefix}fck` : `global-fck`),
+                w: getVal(`${prefix}slab-w`), l: getVal(`${prefix}slab-l`), t: getVal(`${prefix}slab-t`),
+                x1: { s: getStr(`${prefix}slab-x1-size`), g: getStr(`${prefix}slab-x1-grade`), v: getVal(`${prefix}slab-x1-space`) },
+                y1: { s: getStr(`${prefix}slab-y1-size`), g: getStr(`${prefix}slab-y1-grade`), v: getVal(`${prefix}slab-y1-space`) },
+                x2: { s: getStr(`${prefix}slab-x2-size`), g: getStr(`${prefix}slab-x2-grade`), v: getVal(`${prefix}slab-x2-space`) },
+                y2: { s: getStr(`${prefix}slab-y2-size`), g: getStr(`${prefix}slab-y2-grade`), v: getVal(`${prefix}slab-y2-space`) }
+            };
+        }
 
-            if(w===0 || l===0 || t===0) return alert("치수를 정확히 입력하세요.");
+        function getBeamRawInputs(prefix = '') {
+            const type = getStr(`${prefix}beam-type`);
+            const inputs = {
+                name: getStr(`${prefix}beam-name`), type: type,
+                tslab: getVal(`${prefix}beam-tslab`),
+                lossConc: getVal(`${prefix}beam-loss-conc`),
+                lossForm: getVal(`${prefix}beam-loss-form`),
+                lossRebar: getVal(`${prefix}beam-loss-rebar`),
+                fck: getStr(prefix ? `${prefix}fck` : `global-fck`),
+                w: getVal(`${prefix}beam-w`), h: getVal(`${prefix}beam-h`), l: getVal(`${prefix}beam-l`),
+                rebars: {}
+            };
+            const zones = BEAM_TYPES_CONFIG[type];
+            if(zones) {
+                BAR_TYPES.forEach(bar => {
+                    zones.forEach(zone => {
+                        const idPart = `${prefix}beam_${zone.id}_${bar.id}`;
+                        inputs.rebars[`${zone.id}_${bar.id}`] = {
+                            s: getStr(`${idPart}_size`), g: getStr(`${idPart}_grade`), v: getVal(`${idPart}_val`)
+                        };
+                    });
+                });
+            }
+            return inputs;
+        }
 
-            const w_m = w / 1000, l_m = l / 1000, t_m = t / 1000;
+        // --- Core Calculator Functions (Pure Logic) ---
+        function processSlab(inputs) {
+            const w_m = inputs.w / 1000, l_m = inputs.l / 1000, t_m = inputs.t / 1000;
+            const lossConc = 1 + (inputs.lossConc / 100), lossForm = 1 + (inputs.lossForm / 100), lossRebar = 1 + (inputs.lossRebar / 100);
+            
             let concVol = 0, formArea = 0, concFormula = "", formFormula = "";
 
-            if (shape === 'rect') {
+            if (inputs.shape === 'rect') {
                 concVol = w_m * l_m * t_m;
                 concFormula = `(${w_m} * ${l_m} * ${t_m}) * ${lossConc}(할증) = ${(concVol * lossConc).toFixed(3)} m³`;
-                if (type === '기초') {
+                if (inputs.type === '기초') {
                     formArea = (w_m + l_m) * 2 * t_m;
                     formFormula = `((${w_m} + ${l_m}) * 2 * ${t_m}) * ${lossForm}(할증) = ${(formArea * lossForm).toFixed(3)} m²`;
                 } else {
@@ -508,7 +613,7 @@
                 concVol = 0.5 * w_m * l_m * t_m;
                 concFormula = `(0.5 * ${w_m} * ${l_m} * ${t_m}) * ${lossConc}(할증) = ${(concVol * lossConc).toFixed(3)} m³`;
                 const hypotenuse_m = Math.sqrt(w_m*w_m + l_m*l_m);
-                if (type === '기초') {
+                if (inputs.type === '기초') {
                     formArea = (w_m + l_m + hypotenuse_m) * t_m;
                     formFormula = `((${w_m} + ${l_m} + ${hypotenuse_m.toFixed(3)}) * ${t_m}) * ${lossForm}(할증) = ${(formArea * lossForm).toFixed(3)} m²`;
                 } else {
@@ -518,66 +623,47 @@
             }
 
             let rebarDict = {}, rebarFormulas = [], rebarDetails = [];
-            const calcRebar = (label, sizeId, gradeId, spaceId, lengthDir, spaceDir, isTop) => {
-                const space = getVal(spaceId);
-                if(space > 0) {
-                    const size = getStr(sizeId), grade = getStr(gradeId);
-                    const count = Math.ceil(spaceDir / space) + 1;
-                    const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(fck);
+            const calcRebar = (label, conf, lengthDir, spaceDir, isTop) => {
+                if(conf.v > 0) {
+                    const count = Math.ceil(spaceDir / conf.v) + 1;
+                    const db = REBAR_DATA[conf.s].dia, fy = parseInt(conf.g.replace('SD', '')), fckNum = parseFloat(inputs.fck);
                     
                     let ld = Math.round((0.6 * db * fy) / Math.sqrt(fckNum));
                     if(isTop) ld = Math.round(ld * 1.3);
                     let spliceLen = Math.round(ld * 1.3);
                     let spliceCount = Math.floor(lengthDir / 8000);
-                    let hookLen = Math.max(0, t - 80);
+                    let hookLen = Math.max(0, inputs.t - 80);
                     
                     let singleLen = lengthDir + (spliceCount * spliceLen) + (hookLen * 2);
-                    let weight = (singleLen / 1000) * count * REBAR_DATA[size].weight * lossRebar;
+                    let weight = (singleLen / 1000) * count * REBAR_DATA[conf.s].weight * lossRebar;
                     
-                    // 삼각형일 경우에만 철근 중량 절반(0.5) 적용
-                    let isTri = (shape === 'tri');
-                    if (isTri) {
-                        weight = weight * 0.5;
-                    }
+                    let isTri = (inputs.shape === 'tri');
+                    if (isTri) weight = weight * 0.5;
                     
-                    const key = `${size}(${grade})`;
+                    const key = `${conf.s}(${conf.g})`;
                     rebarDict[key] = (rebarDict[key] || 0) + weight;
                     rebarDetails.push(`[${label}] 정착(${isTop?'상':'하'}): ${ld}mm, 이음: ${spliceLen}mm(${spliceCount}회), 갈고리: ${hookLen}mm(x2)`);
-                    rebarFormulas.push(`[${label}] ${key}:\n(기본 ${lengthDir} + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*2}) / 1000 \n= ${singleLen/1000}m * ${count}가닥 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증)${isTri ? ' * 0.5(삼각형)' : ''} \n= ${weight.toFixed(2)} kg\n`);
+                    rebarFormulas.push(`[${label}] ${key}:\n(기본 ${lengthDir} + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*2}) / 1000 \n= ${singleLen/1000}m * ${count}가닥 * ${REBAR_DATA[conf.s].weight}kg/m * ${lossRebar}(할증)${isTri ? ' * 0.5(삼각형)' : ''} \n= ${weight.toFixed(2)} kg\n`);
                 }
             };
-            calcRebar('X1(하)', 'slab-x1-size', 'slab-x1-grade', 'slab-x1-space', w, l, false); 
-            calcRebar('Y1(하)', 'slab-y1-size', 'slab-y1-grade', 'slab-y1-space', l, w, false); 
-            calcRebar('X2(상)', 'slab-x2-size', 'slab-x2-grade', 'slab-x2-space', w, l, true);
-            calcRebar('Y2(상)', 'slab-y2-size', 'slab-y2-grade', 'slab-y2-space', l, w, true);
+            calcRebar('X1(하)', inputs.x1, inputs.w, inputs.l, false); 
+            calcRebar('Y1(하)', inputs.y1, inputs.l, inputs.w, false); 
+            calcRebar('X2(상)', inputs.x2, inputs.w, inputs.l, true);
+            calcRebar('Y2(상)', inputs.y2, inputs.l, inputs.w, true);
 
             let totalRebar = 0; for(let s in rebarDict) totalRebar += rebarDict[s];
-            pushItem({
-                type: shape === 'rect' ? `매트(${type})` : `삼각(${type})`, name: name, fck: fck,
-                conc: concVol * lossConc, form: formArea * lossForm, rebarTotal: totalRebar,
-                rebarDetailsMap: rebarDict, formulas: { conc: concFormula, form: formFormula, rebar: rebarFormulas.join('\n'), details: rebarDetails.join('\n') }
-            });
+            return {
+                itemClass: 'slab', type: inputs.shape === 'rect' ? `매트(${inputs.type})` : `삼각(${inputs.type})`, 
+                name: inputs.name, fck: inputs.fck, conc: concVol * lossConc, form: formArea * lossForm, rebarTotal: totalRebar,
+                rebarDetailsMap: rebarDict, formulas: { conc: concFormula, form: formFormula, rebar: rebarFormulas.join('\n'), details: rebarDetails.join('\n') },
+                rawInputs: inputs
+            };
         }
 
-        function addBeam() {
-            const name = getStr('beam-name');
-            const beamType = getStr('beam-type');
-            
-            const lossConc = 1 + (getVal('beam-loss-conc') / 100);
-            const lossForm = 1 + (getVal('beam-loss-form') / 100);
-            const lossRebar = 1 + (getVal('beam-loss-rebar') / 100);
+        function processBeam(inputs) {
+            const w_m = inputs.w / 1000, h_m = inputs.h / 1000, l_m = inputs.l / 1000, tslab_m = inputs.tslab / 1000;
+            const lossConc = 1 + (inputs.lossConc / 100), lossForm = 1 + (inputs.lossForm / 100), lossRebar = 1 + (inputs.lossRebar / 100);
 
-            const w = getVal('beam-w'); 
-            const h = getVal('beam-h'); 
-            const l = getVal('beam-l'); 
-            const tslab = getVal('beam-tslab'); // 슬래브 두께
-            const fck = getStr('global-fck');
-
-            if(w===0 || h===0 || l===0) return alert("치수를 정확히 입력하세요.");
-
-            const w_m = w / 1000, h_m = h / 1000, l_m = l / 1000, tslab_m = tslab / 1000;
-
-            // 콘크리트 및 거푸집 산출 (슬래브 두께 차감 - 음수 방지 안전코드 추가)
             const effectH_m = Math.max(0, h_m - tslab_m);
             const concVol = w_m * effectH_m * l_m;
             const formArea = (w_m + effectH_m * 2) * l_m; 
@@ -586,35 +672,30 @@
             const formFormula = `(${w_m} + ${effectH_m.toFixed(3)}(유효높이) * 2) * ${l_m} * ${lossForm}(할증) = ${(formArea * lossForm).toFixed(3)} m²`;
 
             let rebarDict = {}, rebarFormulas = [], rebarDetails = [];
-            const zones = BEAM_TYPES_CONFIG[beamType];
+            const zones = BEAM_TYPES_CONFIG[inputs.type];
             
-            // 철근 기록 헬퍼 함수
             function addRebarRecord(label, size, grade, qty, baseLen, hooks, isPassThrough, isTop, typeCode) {
-                const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(fck);
+                const db = REBAR_DATA[size].dia, fy = parseInt(grade.replace('SD', '')), fckNum = parseFloat(inputs.fck);
                 let ld = Math.round((0.6 * db * fy) / Math.sqrt(fckNum));
                 if(isTop) ld = Math.round(ld * 1.3);
                 
-                let hookLen = Math.max(0, h - 80);
+                let hookLen = Math.max(0, inputs.h - 80);
                 let singleLen = baseLen;
                 let formulaText = `구간길이 ${baseLen}`;
                 let detailText = `구간길이: ${baseLen}mm`;
 
                 if (isPassThrough) {
-                    // 전체를 관통하는 기본근 (8m 이음 및 단부 갈고리 발생)
                     let spliceLen = Math.round(ld * 1.3);
                     let spliceCount = Math.floor(baseLen / 8000);
                     singleLen += (spliceCount * spliceLen) + (hookLen * hooks);
                     formulaText += ` + 이음 ${spliceCount*spliceLen} + 갈고리 ${hookLen*hooks}`;
                     detailText += `, 정착: ${ld}mm, 이음: ${spliceLen}mm(${spliceCount}회), 갈고리: ${hookLen}mm(x${hooks})`;
                 } else {
-                    // 보강근 또는 독립근
                     if (typeCode === 'cen-extra') {
-                        // 중앙 보강근 (단순 Ld * 2)
                         singleLen += (ld * 2);
                         formulaText += ` + 정착 ${ld}*2`;
                         detailText += `, 정착: ${ld}mm(x2)`;
                     } else {
-                        // 단부 보강근 ((정착+단부갈고리) * 발생횟수)
                         let anchorTotal = (ld + hookLen) * hooks;
                         singleLen += anchorTotal;
                         formulaText += ` + (정착${ld}+단부갈고리${hookLen})*${hooks}`;
@@ -632,106 +713,295 @@
 
             BAR_TYPES.forEach(bar => {
                 if (bar.type === 'main') {
-                    const isTop = bar.isTop;
-                    const labelPrefix = bar.label;
+                    const isTop = bar.isTop, labelPrefix = bar.label;
 
-                    if (beamType === '전단형') {
-                        const qty = getVal(`beam_all_${bar.id}_val`);
-                        if (qty > 0) {
-                            addRebarRecord(`${labelPrefix}-전단`, getStr(`beam_all_${bar.id}_size`), getStr(`beam_all_${bar.id}_grade`), qty, l, 2, true, isTop, 'pass');
-                        }
-                    } else if (beamType === '양단중앙형') {
-                        const endQty = getVal(`beam_end_${bar.id}_val`), endSize = getStr(`beam_end_${bar.id}_size`), endGrade = getStr(`beam_end_${bar.id}_grade`);
-                        const cenQty = getVal(`beam_cen_${bar.id}_val`), cenSize = getStr(`beam_cen_${bar.id}_size`), cenGrade = getStr(`beam_cen_${bar.id}_grade`);
-                        
-                        // 크기와 강도가 완벽히 동일할 때만 CASE 1-1 (통과/보강 분리) 적용
-                        const isSameSpec = (endSize === cenSize) && (endGrade === cenGrade);
+                    if (inputs.type === '전단형') {
+                        const conf = inputs.rebars[`all_${bar.id}`];
+                        if (conf && conf.v > 0) addRebarRecord(`${labelPrefix}-전단`, conf.s, conf.g, conf.v, inputs.l, 2, true, isTop, 'pass');
+                    } else if (inputs.type === '양단중앙형') {
+                        const endConf = inputs.rebars[`end_${bar.id}`], cenConf = inputs.rebars[`cen_${bar.id}`];
+                        const isSameSpec = (endConf.s === cenConf.s) && (endConf.g === cenConf.g);
 
-                        if (isSameSpec && (endQty > 0 || cenQty > 0)) {
-                            const passQty = Math.min(endQty, cenQty);
-                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenSize, cenGrade, passQty, l, 2, true, isTop, 'pass');
+                        if (isSameSpec && (endConf.v > 0 || cenConf.v > 0)) {
+                            const passQty = Math.min(endConf.v, cenConf.v);
+                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenConf.s, cenConf.g, passQty, inputs.l, 2, true, isTop, 'pass');
                             
-                            const endExtra = endQty - passQty;
-                            if (endExtra > 0) addRebarRecord(`${labelPrefix}-양단(보강)`, endSize, endGrade, endExtra, l/2, 2, false, isTop, 'end-extra');
+                            const endExtra = endConf.v - passQty;
+                            if (endExtra > 0) addRebarRecord(`${labelPrefix}-양단(보강)`, endConf.s, endConf.g, endExtra, inputs.l/2, 2, false, isTop, 'end-extra');
                             
-                            const cenExtra = cenQty - passQty;
-                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenSize, cenGrade, cenExtra, l/2, 0, false, isTop, 'cen-extra');
+                            const cenExtra = cenConf.v - passQty;
+                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenConf.s, cenConf.g, cenExtra, inputs.l/2, 0, false, isTop, 'cen-extra');
                         } else {
-                            // CASE 1-2 (독립 산출)
-                            if (endQty > 0) addRebarRecord(`${labelPrefix}-양단(독립)`, endSize, endGrade, endQty, l/2, 2, false, isTop, 'end-extra');
-                            if (cenQty > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenSize, cenGrade, cenQty, l/2, 0, false, isTop, 'cen-extra');
+                            if (endConf.v > 0) addRebarRecord(`${labelPrefix}-양단(독립)`, endConf.s, endConf.g, endConf.v, inputs.l/2, 2, false, isTop, 'end-extra');
+                            if (cenConf.v > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenConf.s, cenConf.g, cenConf.v, inputs.l/2, 0, false, isTop, 'cen-extra');
                         }
-                    } else if (beamType === '내중외단형') {
-                        const inQty = getVal(`beam_in_${bar.id}_val`), inSize = getStr(`beam_in_${bar.id}_size`), inGrade = getStr(`beam_in_${bar.id}_grade`);
-                        const cenQty = getVal(`beam_cen_${bar.id}_val`), cenSize = getStr(`beam_cen_${bar.id}_size`), cenGrade = getStr(`beam_cen_${bar.id}_grade`);
-                        const outQty = getVal(`beam_out_${bar.id}_val`), outSize = getStr(`beam_out_${bar.id}_size`), outGrade = getStr(`beam_out_${bar.id}_grade`);
+                    } else if (inputs.type === '내중외단형') {
+                        const inConf = inputs.rebars[`in_${bar.id}`], cenConf = inputs.rebars[`cen_${bar.id}`], outConf = inputs.rebars[`out_${bar.id}`];
+                        const isSameSpec = (inConf.s === cenConf.s && cenConf.s === outConf.s) && (inConf.g === cenConf.g && cenConf.g === outConf.g);
 
-                        // 3구간 모두 크기와 강도가 일치할 때만 CASE 2-1 (통과/보강 분리) 적용
-                        const isSameSpec = (inSize === cenSize && cenSize === outSize) && (inGrade === cenGrade && cenGrade === outGrade);
-
-                        if (isSameSpec && (inQty > 0 || cenQty > 0 || outQty > 0)) {
-                            const passQty = Math.min(inQty, cenQty, outQty);
-                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenSize, cenGrade, passQty, l, 2, true, isTop, 'pass');
+                        if (isSameSpec && (inConf.v > 0 || cenConf.v > 0 || outConf.v > 0)) {
+                            const passQty = Math.min(inConf.v, cenConf.v, outConf.v);
+                            if (passQty > 0) addRebarRecord(`${labelPrefix}-통과근`, cenConf.s, cenConf.g, passQty, inputs.l, 2, true, isTop, 'pass');
                             
-                            const inExtra = inQty - passQty;
-                            if (inExtra > 0) addRebarRecord(`${labelPrefix}-내단(보강)`, inSize, inGrade, inExtra, l/4, 1, false, isTop, 'in-extra');
+                            const inExtra = inConf.v - passQty;
+                            if (inExtra > 0) addRebarRecord(`${labelPrefix}-내단(보강)`, inConf.s, inConf.g, inExtra, inputs.l/4, 1, false, isTop, 'in-extra');
                             
-                            const cenExtra = cenQty - passQty;
-                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenSize, cenGrade, cenExtra, l/2, 0, false, isTop, 'cen-extra');
+                            const cenExtra = cenConf.v - passQty;
+                            if (cenExtra > 0) addRebarRecord(`${labelPrefix}-중앙(보강)`, cenConf.s, cenConf.g, cenExtra, inputs.l/2, 0, false, isTop, 'cen-extra');
                             
-                            const outExtra = outQty - passQty;
-                            if (outExtra > 0) addRebarRecord(`${labelPrefix}-외단(보강)`, outSize, outGrade, outExtra, l/4, 1, false, isTop, 'out-extra');
+                            const outExtra = outConf.v - passQty;
+                            if (outExtra > 0) addRebarRecord(`${labelPrefix}-외단(보강)`, outConf.s, outConf.g, outExtra, inputs.l/4, 1, false, isTop, 'out-extra');
                         } else {
-                            // CASE 2-2 (독립 산출)
-                            if (inQty > 0) addRebarRecord(`${labelPrefix}-내단(독립)`, inSize, inGrade, inQty, l/4, 1, false, isTop, 'in-extra');
-                            if (cenQty > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenSize, cenGrade, cenQty, l/2, 0, false, isTop, 'cen-extra');
-                            if (outQty > 0) addRebarRecord(`${labelPrefix}-외단(독립)`, outSize, outGrade, outQty, l/4, 1, false, isTop, 'out-extra');
+                            if (inConf.v > 0) addRebarRecord(`${labelPrefix}-내단(독립)`, inConf.s, inConf.g, inConf.v, inputs.l/4, 1, false, isTop, 'in-extra');
+                            if (cenConf.v > 0) addRebarRecord(`${labelPrefix}-중앙(독립)`, cenConf.s, cenConf.g, cenConf.v, inputs.l/2, 0, false, isTop, 'cen-extra');
+                            if (outConf.v > 0) addRebarRecord(`${labelPrefix}-외단(독립)`, outConf.s, outConf.g, outConf.v, inputs.l/4, 1, false, isTop, 'out-extra');
                         }
                     }
                 } else if (bar.type === 'stirrup') {
-                    // 3. 늑근 산출 (각 구간별로 독립적)
                     zones.forEach(zone => {
-                        const spacing = getVal(`beam_${zone.id}_${bar.id}_val`);
+                        const conf = inputs.rebars[`${zone.id}_${bar.id}`];
+                        const spacing = conf.v;
                         if(spacing > 0) {
-                            const size = getStr(`beam_${zone.id}_${bar.id}_size`);
-                            const grade = getStr(`beam_${zone.id}_${bar.id}_grade`);
-                            const zoneLength = l * zone.ratio;
+                            const zoneLength = inputs.l * zone.ratio;
+                            let count = 0;
                             
-                            const count = Math.ceil(zoneLength / spacing) + 1;
-                            // 늑근 둘레는 슬래브 두께 차감한 높이로 정밀 산출 (음수방지)
-                            const singleLen = 2 * (w + Math.max(0, h - tslab)); 
-                            const weight = (singleLen / 1000) * count * REBAR_DATA[size].weight * lossRebar;
+                            if (inputs.type === '양단중앙형' && zone.id === 'end') {
+                                count = (Math.ceil((zoneLength / 2) / spacing) + 1) * 2;
+                            } else {
+                                count = Math.ceil(zoneLength / spacing) + 1;
+                            }
+
+                            const singleLen = 2 * (inputs.w + Math.max(0, inputs.h - inputs.tslab)); 
+                            const weight = (singleLen / 1000) * count * REBAR_DATA[conf.s].weight * lossRebar;
                             
-                            const key = `${size}(${grade})`;
+                            const key = `${conf.s}(${conf.g})`;
                             rebarDict[key] = (rebarDict[key] || 0) + weight;
                             rebarDetails.push(`[${zone.label}] ${bar.label} - 구간길이: ${zoneLength}mm`);
-                            rebarFormulas.push(`[${zone.label}] ${bar.label} ${key}:\n${singleLen/1000}m(둘레) * ${count}조 * ${REBAR_DATA[size].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
+                            rebarFormulas.push(`[${zone.label}] ${bar.label} ${key}:\n${singleLen/1000}m(둘레) * ${count}가닥(조) * ${REBAR_DATA[conf.s].weight}kg/m * ${lossRebar}(할증) \n= ${weight.toFixed(2)} kg\n`);
                         }
                     });
                 }
             });
 
             let totalRebar = 0; for(let s in rebarDict) totalRebar += rebarDict[s];
-
-            pushItem({
-                type: `지중보(${beamType})`, name: name, fck: fck,
+            return {
+                itemClass: 'beam', type: `지중보(${inputs.type})`, name: inputs.name, fck: inputs.fck,
                 conc: concVol * lossConc, form: formArea * lossForm, rebarTotal: totalRebar,
-                rebarDetailsMap: rebarDict, formulas: { conc: concFormula, form: formFormula, rebar: rebarFormulas.join('\n'), details: rebarDetails.join('\n') }
-            });
+                rebarDetailsMap: rebarDict, formulas: { conc: concFormula, form: formFormula, rebar: rebarFormulas.join('\n'), details: rebarDetails.join('\n') },
+                rawInputs: inputs
+            };
         }
 
-        function pushItem(data) {
-            data.id = Date.now(); calculatedItems.push(data); renderTable();
+        // --- Core Entry Points ---
+        function addSlab() {
+            const inputs = getSlabRawInputs('');
+            if(inputs.w===0 || inputs.l===0 || inputs.t===0) return alert("치수를 정확히 입력하세요.");
+            const item = processSlab(inputs);
+            pushItem(item);
+        }
+
+        function addBeam() {
+            const inputs = getBeamRawInputs('');
+            if(inputs.w===0 || inputs.h===0 || inputs.l===0) return alert("치수를 정확히 입력하세요.");
+            const item = processBeam(inputs);
+            pushItem(item);
+        }
+
+        function pushItem(item) {
+            item.id = Date.now(); 
+            calculatedItems.push(item); 
+            renderTable();
         }
 
         function deleteItem(id) {
-            calculatedItems = calculatedItems.filter(item => item.id !== id); renderTable();
+            calculatedItems = calculatedItems.filter(item => item.id !== id); 
+            renderTable();
         }
 
         function clearList() {
             if(confirm("모든 데이터를 지우시겠습니까?")) { calculatedItems = []; renderTable(); }
         }
 
+        // --- Edit Modal Functions ---
+        function getSlabEditHTML(d) {
+            return `
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center gap-3 bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">부재명:</label>
+                        <input type="text" id="edit-slab-name" value="${d.name}" class="border border-slate-300 px-2 py-1 text-sm w-20 rounded outline-none focus:border-blue-400">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">특성:</label>
+                        <select id="edit-slab-type" class="border border-slate-300 px-2 py-1 text-sm rounded outline-none focus:border-blue-400">
+                            <option value="기초" ${d.type==='기초'?'selected':''}>기초</option>
+                            <option value="슬래브" ${d.type==='슬래브'?'selected':''}>슬래브</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">콘크리트:</label>
+                        ${buildFckSelect('edit-fck', d.fck)}
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3 bg-blue-50 p-2 rounded border border-blue-200 shadow-sm">
+                    <span class="text-xs font-bold text-blue-800">할증률(%):</span>
+                    <label class="text-xs text-slate-600">레미콘<input type="number" id="edit-slab-loss-conc" value="${d.lossConc}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                    <label class="text-xs text-slate-600">거푸집<input type="number" id="edit-slab-loss-form" value="${d.lossForm}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                    <label class="text-xs text-slate-600">철근<input type="number" id="edit-slab-loss-rebar" value="${d.lossRebar}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <div class="mb-3 border-b border-slate-100 pb-2">
+                        <label class="text-xs font-bold text-slate-600 mr-3">형태 선택:</label>
+                        <label class="mr-2 text-sm"><input type="radio" name="edit-slab-shape" value="rect" ${d.shape==='rect'?'checked':''} onchange="toggleEditSlabShape()"> 사각형</label>
+                        <label class="text-sm"><input type="radio" name="edit-slab-shape" value="tri" ${d.shape==='tri'?'checked':''} onchange="toggleEditSlabShape()"> 삼각형(직각)</label>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label id="label-edit-slab-w" class="block text-xs text-slate-500 mb-1">가로길이(mm)</label>
+                            <input type="number" id="edit-slab-w" value="${d.w}" class="w-full border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label id="label-edit-slab-l" class="block text-xs text-slate-500 mb-1">세로길이(mm)</label>
+                            <input type="number" id="edit-slab-l" value="${d.l}" class="w-full border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">두께(mm)</label>
+                            <input type="number" id="edit-slab-t" value="${d.t}" class="w-full border border-slate-300 rounded px-2 py-1 text-sm outline-none focus:border-blue-400">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-grip-lines mr-1"></i> 철근 배근 정보</h4>
+                    <div class="space-y-2">
+                        ${['x1','y1','x2','y2'].map(ax => `
+                        <div class="flex gap-2 items-center">
+                            <span class="w-12 text-xs font-bold ${ax.includes('2')?'text-blue-700':''}">${ax.toUpperCase()}(${ax.includes('1')?'하':'상'})</span>
+                            ${buildRebarSizeSelect(`edit-slab-${ax}-size`, d[ax].s)}
+                            ${buildGradeSelect(`edit-slab-${ax}-grade`, d[ax].g)}
+                            <input type="number" id="edit-slab-${ax}-space" value="${d[ax].v || ''}" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-400" placeholder="간격(mm)">
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function getBeamEditHTML(d) {
+            return `
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center gap-3 bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">부재명:</label>
+                        <input type="text" id="edit-beam-name" value="${d.name}" class="border border-slate-300 px-2 py-1 text-sm w-20 rounded outline-none focus:border-blue-400">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">배근 형태:</label>
+                        <select id="edit-beam-type" class="border border-slate-300 px-2 py-1 text-sm rounded bg-yellow-50 font-bold outline-none focus:border-blue-400" onchange="renderEditBeamInputs()">
+                            <option value="전단형" ${d.type==='전단형'?'selected':''}>전단형</option>
+                            <option value="양단중앙형" ${d.type==='양단중앙형'?'selected':''}>양단중앙형</option>
+                            <option value="내중외단형" ${d.type==='내중외단형'?'selected':''}>내중외단형</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">콘크리트:</label>
+                        ${buildFckSelect('edit-fck', d.fck)}
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex items-center bg-orange-50 px-2 py-1 rounded border border-orange-200 shadow-sm">
+                        <label class="text-xs font-bold text-orange-800 mr-1">연결슬래브(mm):</label>
+                        <input type="number" id="edit-beam-tslab" value="${d.tslab}" class="w-14 text-center font-bold border border-orange-300 rounded px-1 outline-none">
+                    </div>
+                    <div class="flex items-center bg-blue-50 px-2 py-1.5 rounded border border-blue-200 gap-2 text-xs shadow-sm">
+                        <span class="font-bold text-blue-800">할증률(%):</span>
+                        <label class="text-slate-600">레미콘<input type="number" id="edit-beam-loss-conc" value="${d.lossConc}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                        <label class="text-slate-600">거푸집<input type="number" id="edit-beam-loss-form" value="${d.lossForm}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                        <label class="text-slate-600">철근<input type="number" id="edit-beam-loss-rebar" value="${d.lossRebar}" class="w-10 ml-1 text-center font-bold border border-blue-300 rounded outline-none"></label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">단면 폭(W) mm</label>
+                        <input type="number" id="edit-beam-w" value="${d.w}" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">단면 높이(H) mm</label>
+                        <input type="number" id="edit-beam-h" value="${d.h}" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">길이(L) mm</label>
+                        <input type="number" id="edit-beam-l" value="${d.l}" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm outline-none focus:border-blue-400">
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-layer-group mr-1"></i> 형태별 주근 및 늑근 배근</h4>
+                    <div id="edit-beam-dynamic-inputs" class="grid gap-3 grid-cols-1">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        let editPreFillRebars = null;
+        function openEditModal(id) {
+            const item = calculatedItems.find(i => i.id === id);
+            if(!item.rawInputs) {
+                alert("이전 버전에서 저장된 데이터는 원본 입력값이 없어 팝업 수정이 불가능합니다.");
+                return;
+            }
+            
+            currentEditId = id;
+            document.getElementById('edit-modal-title').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>[${item.name}] 항목 수정`;
+            
+            const container = document.getElementById('edit-modal-body');
+            if (item.itemClass === 'slab') {
+                container.innerHTML = getSlabEditHTML(item.rawInputs);
+                toggleEditSlabShape();
+            } else {
+                container.innerHTML = getBeamEditHTML(item.rawInputs);
+                editPreFillRebars = item.rawInputs.rebars;
+                renderEditBeamInputs(editPreFillRebars); // 💡 수정 로직 복원 (가장 중요한 부분)
+            }
+            document.getElementById('edit-item-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-item-modal').classList.add('hidden');
+            currentEditId = null;
+            editPreFillRebars = null;
+        }
+
+        function saveEdit() {
+            const item = calculatedItems.find(i => i.id === currentEditId);
+            if (!item) return;
+
+            let newItem;
+            if (item.itemClass === 'slab') {
+                const inputs = getSlabRawInputs('edit-');
+                if(inputs.w===0 || inputs.l===0 || inputs.t===0) return alert("치수를 정확히 입력하세요.");
+                newItem = processSlab(inputs);
+            } else {
+                const inputs = getBeamRawInputs('edit-');
+                if(inputs.w===0 || inputs.h===0 || inputs.l===0) return alert("치수를 정확히 입력하세요.");
+                newItem = processBeam(inputs);
+            }
+
+            newItem.id = currentEditId;
+            calculatedItems = calculatedItems.map(i => i.id === currentEditId ? newItem : i);
+            renderTable();
+            closeEditModal();
+        }
+
+        // --- Table Render & Export ---
         function renderTable() {
             const tbody = document.getElementById('result-tbody');
             const tfoot = document.getElementById('result-tfoot');
@@ -742,9 +1012,7 @@
             if(calculatedItems.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400">입력된 데이터가 없습니다.</td></tr>`;
                 tfoot.style.display = 'none'; 
-                concSummaryDiv.innerHTML = "데이터 없음";
-                formSummaryDiv.innerHTML = "데이터 없음";
-                rebarSummaryDiv.innerHTML = "데이터 없음"; 
+                concSummaryDiv.innerHTML = "데이터 없음"; formSummaryDiv.innerHTML = "데이터 없음"; rebarSummaryDiv.innerHTML = "데이터 없음"; 
                 return;
             }
 
@@ -757,28 +1025,25 @@
                     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                         <td class="px-4 py-3">${item.type}</td>
                         <td class="px-4 py-3 font-bold">${item.name}</td>
-                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="showFormulaModal('레미콘 산출식 (${item.name})', \`${item.formulas.conc}\`)">
+                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="openFormulaModal(${item.id}, 'conc')">
                             <span class="border-b border-dashed border-slate-300 group-hover:text-blue-700 font-medium">${item.conc.toFixed(2)}</span><br>
                             <span class="text-[10px] text-slate-400 leading-none">${item.fck} MPa</span>
                         </td>
-                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="showFormulaModal('거푸집 산출식 (${item.name})', \`${item.formulas.form}\`)">
+                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="openFormulaModal(${item.id}, 'form')">
                             <span class="border-b border-dashed border-slate-300 group-hover:text-blue-700 font-medium">${item.form.toFixed(2)}</span>
                         </td>
-                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="showFormulaModal('철근 상세 산출식 (${item.name})', \`${item.formulas.details}\\n\\n${item.formulas.rebar}\`)">
+                        <td class="px-4 py-3 text-right cursor-pointer hover:bg-blue-100 group" ondblclick="openFormulaModal(${item.id}, 'rebar')">
                             <span class="border-b border-dashed border-slate-300 group-hover:text-blue-700 font-medium">${item.rebarTotal.toFixed(2)}</span>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <button onclick="deleteItem(${item.id})" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="openEditModal(${item.id})" class="text-blue-500 hover:text-blue-700 mr-3" title="수정"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteItem(${item.id})" class="text-red-400 hover:text-red-600" title="삭제"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
                 sumConc += item.conc; sumForm += item.form; sumRebar += item.rebarTotal;
                 
-                // 철근 규격별 수집
-                for(let size in item.rebarDetailsMap) {
-                    totalRebarByType[size] = (totalRebarByType[size] || 0) + item.rebarDetailsMap[size];
-                }
-                // 레미콘 강도별 수집
+                for(let size in item.rebarDetailsMap) { totalRebarByType[size] = (totalRebarByType[size] || 0) + item.rebarDetailsMap[size]; }
                 totalConcByFck[item.fck] = (totalConcByFck[item.fck] || 0) + item.conc;
             });
 
@@ -787,21 +1052,16 @@
             document.getElementById('total-form').innerText = sumForm.toFixed(2);
             document.getElementById('total-rebar').innerText = sumRebar.toFixed(2);
 
-            // 1. 레미콘 서머리 렌더링
             let concSummaryHtml = '';
             Object.keys(totalConcByFck).sort().forEach(fck => {
                 concSummaryHtml += `<span class="bg-slate-100 border border-slate-300 text-slate-700 px-2 py-1 rounded text-xs font-bold">${fck} MPa : ${totalConcByFck[fck].toFixed(3)} m³</span>`;
             });
             concSummaryDiv.innerHTML = concSummaryHtml || "데이터 없음";
 
-            // 2. 거푸집 서머리 렌더링
             let formSummaryHtml = '';
-            if (sumForm > 0) {
-                formSummaryHtml = `<span class="bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1 rounded text-xs font-bold">일반 : ${sumForm.toFixed(3)} m²</span>`;
-            }
+            if (sumForm > 0) formSummaryHtml = `<span class="bg-amber-50 border border-amber-200 text-amber-800 px-2 py-1 rounded text-xs font-bold">일반 : ${sumForm.toFixed(3)} m²</span>`;
             formSummaryDiv.innerHTML = formSummaryHtml || "데이터 없음";
 
-            // 3. 철근 서머리 렌더링
             let rebarSummaryHtml = '';
             Object.keys(totalRebarByType).sort().forEach(k => {
                 rebarSummaryHtml += `<span class="bg-blue-50 border border-blue-200 text-blue-800 px-2 py-1 rounded text-xs font-bold">${k} : ${(totalRebarByType[k]/1000).toFixed(3)} ton</span>`;
