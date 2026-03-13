@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 관리 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin 2s linear infinite; }
+
+        th.dragging { opacity: 0.5; background-color: #e2e8f0; }
+        .resizer { position: absolute; right: 0; top: 0; width: 5px; height: 100%; cursor: col-resize; user-select: none; }
+        .resizer:hover, .resizing { background-color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen overflow-x-hidden">
+
+    <!-- 강력한 인증 에러 배너 -->
+    <div id="criticalErrorBanner" class="hidden fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-[100] bg-red-50 border-2 border-red-500 text-red-800 p-5 rounded-2xl shadow-2xl flex items-start gap-4 transition-all">
+        <i data-lucide="alert-triangle" class="w-8 h-8 flex-shrink-0 mt-0.5 text-red-600 animate-pulse"></i>
+        <div class="flex-1">
+            <p class="font-extrabold text-lg mb-1">⚠️ Firebase 익명 로그인 설정이 필요합니다!</p>
+            <p id="criticalErrorText" class="text-sm mt-1 text-red-700 leading-relaxed"></p>
+        </div>
+        <button onclick="document.getElementById('criticalErrorBanner').classList.add('hidden')" class="text-red-400 hover:text-red-700">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <!-- 메인 대시보드 화면 -->
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2 text-slate-800">
+                    <i data-lucide="building-2" class="text-blue-600"></i>
+                    프로젝트 관리
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-3 relative">
+                <!-- 보기 옵션 버튼 -->
+                <button id="viewOptionsBtn" class="flex items-center gap-2 bg-white border border-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> 보기 옵션
+                </button>
+                
+                <!-- 보기 옵션 드롭다운 (그룹화 & 필터 추가) -->
+                <div id="viewOptionsDropdown" class="hidden absolute top-full right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl z-20 p-4">
+                    <!-- 완료된 공사 숨기기 토글 -->
+                    <label class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 cursor-pointer bg-slate-50 p-2 rounded-lg">
+                        <input type="checkbox" id="hideCompletedToggle" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm font-bold text-slate-800 flex-1">준공 완료된 프로젝트 숨기기</span>
+                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                    </label>
+
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 px-1">표시할 열 선택</h4>
+                    <div id="columnCheckboxes" class="max-h-80 overflow-y-auto pr-2 space-y-4">
+                        <!-- JS에서 그룹별 동적 생성 -->
+                    </div>
+                </div>
+
+                <!-- 현장 추가 버튼 -->
+                <button id="openModalBtn" class="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-200">
+                    <i data-lucide="plus" class="w-4 h-4 text-white"></i> 현장 추가
+                </button>
+            </div>
+        </header>
+
+        <!-- 데이터 테이블 영역 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap table-fixed">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider font-semibold" id="tableHeaderRow">
+                            <!-- JS 동적 생성 -->
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- JS 동적 생성 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="tableLoading" class="flex flex-col items-center justify-center py-20 text-blue-500">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+                <p class="mt-3 text-sm text-slate-500 font-medium">데이터를 불러오는 중...</p>
+            </div>
+
+            <div id="tableEmpty" class="hidden flex flex-col items-center justify-center py-20 text-slate-400">
+                <div class="bg-slate-100 p-4 rounded-full mb-4">
+                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+                </div>
+                <p class="font-medium text-slate-600" id="emptyMessage">표시할 프로젝트가 없습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 현장 추가 모달 팝업 -->
+    <div id="addModal" class="modal fixed inset-0 bg-slate-900/60 z-[50] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-slate-800">
+                    <i data-lucide="file-scan" class="text-blue-600"></i> 새 프로젝트 등록
+                </h2>
+                <div class="flex bg-white p-1 rounded-lg border border-slate-200 ml-6">
+                    <button id="tabContract" class="px-4 py-1.5 rounded-md text-sm font-bold bg-blue-100 text-blue-700 transition-colors">공사 계약서</button>
+                    <button id="tabOverview" class="px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">공사 개요서</button>
+                </div>
+                <div class="flex-1"></div>
+                <button id="closeModalBtn" class="text-slate-400 hover:text-red-500 bg-white rounded-full p-1 border border-slate-200 hover:bg-red-50">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-hidden flex flex-col lg:flex-row bg-white">
+                <div class="w-full lg:w-5/12 p-6 border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col overflow-y-auto bg-slate-50/50">
+                    <div id="uploadArea" class="border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50/80 cursor-pointer group mb-4 min-h-[160px]">
+                        <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,image/png,image/jpeg">
+                        <div class="bg-white p-3 rounded-full text-blue-600 mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                        </div>
+                        <p class="font-bold text-blue-800">문서 파일 첨부</p>
+                    </div>
+                    
+                    <div id="previewContainer" class="hidden flex-1 w-full min-h-[350px] border border-slate-200 rounded-xl overflow-hidden bg-white relative mb-4">
+                        <embed id="pdfPreview" class="hidden w-full h-full" type="application/pdf">
+                        <img id="imgPreview" class="hidden w-full h-full object-contain p-2">
+                    </div>
+                    
+                    <button id="scanBtn" disabled class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed">
+                        <i data-lucide="bot" class="w-5 h-5"></i> <span id="scanBtnText">문서 업로드 대기중...</span>
+                    </button>
+                    <div id="scanError" class="hidden mt-3 text-sm text-red-600 bg-red-50 p-3 rounded-xl border border-red-100 flex items-start gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i> <span id="scanErrorMsg"></span>
+                    </div>
+                </div>
+                
+                <div class="w-full lg:w-7/12 p-6 overflow-y-auto relative">
+                    <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2" id="formTitle">
+                            <i data-lucide="clipboard-edit" class="w-5 h-5 text-blue-600"></i> 정보 확인
+                        </h3>
+                    </div>
+                    <form id="projectForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                        <!-- JS 동적 생성 -->
+                    </form>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <button id="cancelModalBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200">취소</button>
+                <button id="saveProjectBtn" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> 등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✏️ 현장 수정 모달 팝업 -->
+    <div id="editModal" class="modal fixed inset-0 bg-slate-900/60 z-[50] items-center justify-center p-4 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-blue-800">
+                    <i data-lucide="pencil" class="text-blue-600"></i> 프로젝트 정보 수정
+                </h2>
+                <button id="closeEditBtn" class="text-blue-400 hover:text-blue-700 bg-white rounded-full p-1 border border-blue-200 hover:bg-blue-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 bg-white">
+                <form id="editProjectForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    <!-- JS에서 전체 필드 동적 생성 -->
+                </form>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <button id="cancelEditBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200">취소</button>
+                <button id="saveEditBtn" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> 수정 사항 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div id="confirmModal" class="modal fixed inset-0 bg-slate-900/60 z-[60] items-center justify-center p-4 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">프로젝트 삭제</h3>
+            <p class="text-sm text-slate-500 mb-6">이 프로젝트를 정말 삭제하시겠습니까?</p>
+            <div class="flex gap-3 w-full">
+                <button id="cancelConfirmBtn" class="flex-1 px-4 py-2.5 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">취소</button>
+                <button id="okConfirmBtn" class="flex-1 px-4 py-2.5 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700">삭제하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 발급받으신 Google AI Studio API 키
+        const apiKey = "AIzaSyBBGQE_o7WRPvg6RlOttkXyNFkD8vbQnF0"; 
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL5m8zW1PF6Y_PBHGV7mM4NoquTmrt0RM",
+            authDomain: "project-list-21920.firebaseapp.com",
+            projectId: "project-list-21920",
+            storageBucket: "project-list-21920.firebasestorage.app",
+            messagingSenderId: "973863678039",
+            appId: "1:973863678039:web:3d41a45c845a27cb3ff312"
+        };
+        const customAppId = "project-list-21920";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-xl text-white font-bold shadow-xl z-[100] transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-slate-800'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // 전체 데이터 필드 스키마 정의 (그룹화 및 신규 항목(지역/지구, 주용도) 추가)
+        const ALL_FIELDS = [
+            // 기본 및 필수
+            { id: "projectName", label: "공사명", default: true, type: 'contract', group: '기본 정보', colSpan: 2 },
+            { id: "location", label: "공사현장", default: true, type: 'overview', group: '기본 정보', colSpan: 2 },
+            // 계약 정보
+            { id: "contractAmount", label: "계약금액", default: true, type: 'contract', group: '계약 금액' },
+            { id: "supplyValue", label: "공급가액", default: false, type: 'contract', group: '계약 금액' },
+            { id: "vat", label: "부가가치세", default: false, type: 'contract', group: '계약 금액' },
+            { id: "contractDate", label: "계약일", default: true, type: 'contract', group: '일정 관리' },
+            { id: "startDate", label: "착공일", default: true, type: 'contract', group: '일정 관리' },
+            { id: "endDate", label: "준공일", default: true, type: 'contract', group: '일정 관리' },
+            // 업체 정보
+            { id: "clientName", label: "도급인(발주처)", default: true, type: 'contract', group: '업체 정보' },
+            { id: "clientCEO", label: "도급인 대표", default: false, type: 'contract', group: '업체 정보' },
+            { id: "contractorName", label: "수급인(시공사)", default: false, type: 'contract', group: '업체 정보' },
+            // 개요서 정보
+            { id: "siteArea", label: "대지면적", default: false, type: 'overview', group: '건축 개요' },
+            { id: "totalFloorArea", label: "연면적", default: false, type: 'overview', group: '건축 개요' },
+            { id: "buildingArea", label: "건축면적", default: false, type: 'overview', group: '건축 개요' },
+            { id: "maxHeight", label: "최고높이", default: false, type: 'overview', group: '건축 개요' },
+            { id: "floors", label: "층수", default: false, type: 'overview', group: '건축 개요' },
+            { id: "zone", label: "지역/지구", default: false, type: 'overview', group: '건축 개요' },
+            { id: "mainPurpose", label: "주용도", default: false, type: 'overview', group: '건축 개요' },
+        ];
+
+        let currentUser = null;
+        let unsubscribeDb = null;
+        let projects = [];
+        let base64File = null;
+        let mimeType = null;
+        let currentDocType = 'contract'; 
+        let editingProjectId = null;
+        
+        const savedColumns = localStorage.getItem('visibleColumns');
+        let visibleColumns = savedColumns ? JSON.parse(savedColumns) : ALL_FIELDS.filter(f => f.default).map(f => f.id);
+        const savedWidths = localStorage.getItem('columnWidths');
+        let columnWidths = savedWidths ? JSON.parse(savedWidths) : {};
+        
+        // 필터 설정 (초기값: 체크 상태 - true)
+        const savedHideCompleted = localStorage.getItem('hideCompleted');
+        let hideCompleted = savedHideCompleted !== null ? JSON.parse(savedHideCompleted) : true;
+
+        const DOM = {
+            viewOptionsBtn: document.getElementById('viewOptionsBtn'),
+            viewOptionsDropdown: document.getElementById('viewOptionsDropdown'),
+            hideCompletedToggle: document.getElementById('hideCompletedToggle'),
+            columnCheckboxes: document.getElementById('columnCheckboxes'),
+            tableHeaderRow: document.getElementById('tableHeaderRow'),
+            tableBody: document.getElementById('tableBody'),
+            tableLoading: document.getElementById('tableLoading'),
+            tableEmpty: document.getElementById('tableEmpty'),
+            emptyMessage: document.getElementById('emptyMessage'),
+            
+            // Add Modal
+            addModal: document.getElementById('addModal'),
+            openModalBtn: document.getElementById('openModalBtn'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            cancelModalBtn: document.getElementById('cancelModalBtn'),
+            saveProjectBtn: document.getElementById('saveProjectBtn'),
+            fileInput: document.getElementById('fileInput'),
+            previewContainer: document.getElementById('previewContainer'),
+            pdfPreview: document.getElementById('pdfPreview'),
+            imgPreview: document.getElementById('imgPreview'),
+            scanBtn: document.getElementById('scanBtn'),
+            scanBtnText: document.getElementById('scanBtnText'),
+            scanError: document.getElementById('scanError'),
+            scanErrorMsg: document.getElementById('scanErrorMsg'),
+            projectForm: document.getElementById('projectForm'),
+            uploadArea: document.getElementById('uploadArea'),
+            tabContract: document.getElementById('tabContract'),
+            tabOverview: document.getElementById('tabOverview'),
+            formTitle: document.getElementById('formTitle'),
+
+            // Edit Modal
+            editModal: document.getElementById('editModal'),
+            closeEditBtn: document.getElementById('closeEditBtn'),
+            cancelEditBtn: document.getElementById('cancelEditBtn'),
+            saveEditBtn: document.getElementById('saveEditBtn'),
+            editProjectForm: document.getElementById('editProjectForm')
+        };
+
+        /* ================= 초기화 및 설정 ================= */
+        function initDropdown() {
+            DOM.hideCompletedToggle.checked = hideCompleted;
+            DOM.hideCompletedToggle.addEventListener('change', (e) => {
+                hideCompleted = e.target.checked;
+                localStorage.setItem('hideCompleted', JSON.stringify(hideCompleted));
+                renderTable();
+            });
+
+            DOM.columnCheckboxes.innerHTML = '';
+            
+            // 5개 분류별 그룹화 렌더링
+            const groups = [...new Set(ALL_FIELDS.map(f => f.group))];
+            
+            groups.forEach(groupName => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = "mb-4";
+                groupDiv.innerHTML = `<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 pb-1 border-b border-slate-100">${groupName}</div>`;
+                
+                const gridDiv = document.createElement('div');
+                gridDiv.className = "grid grid-cols-2 gap-2";
+
+                ALL_FIELDS.filter(f => f.group === groupName).forEach(field => {
+                    const isChecked = visibleColumns.includes(field.id);
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors";
+                    label.innerHTML = `
+                        <input type="checkbox" class="column-toggle w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${field.id}" ${isChecked ? 'checked' : ''}>
+                        <span class="text-xs font-medium text-slate-700 select-none truncate" title="${field.label}">${field.label}</span>
+                    `;
+                    gridDiv.appendChild(label);
+                });
+                
+                groupDiv.appendChild(gridDiv);
+                DOM.columnCheckboxes.appendChild(groupDiv);
+            });
+
+            document.querySelectorAll('.column-toggle').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) visibleColumns.push(e.target.value);
+                    else visibleColumns = visibleColumns.filter(col => col !== e.target.value);
+                    localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
+                    renderTable();
+                });
+            });
+
+            DOM.viewOptionsBtn.addEventListener('click', (e) => { e.stopPropagation(); DOM.viewOptionsDropdown.classList.toggle('hidden'); });
+            document.addEventListener('click', (e) => { if (!DOM.viewOptionsDropdown.contains(e.target) && e.target !== DOM.viewOptionsBtn) DOM.viewOptionsDropdown.classList.add('hidden'); });
+        }
+
+        // Add Modal Form Render
+        function switchTab(type) {
+            currentDocType = type;
+            if (type === 'contract') {
+                DOM.tabContract.className = "px-4 py-1.5 rounded-md text-sm font-bold bg-blue-100 text-blue-700 transition-colors";
+                DOM.tabOverview.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors";
+                DOM.formTitle.innerHTML = `<i data-lucide="clipboard-edit" class="w-5 h-5 text-blue-600 inline-block align-middle pb-1"></i> 계약서 정보`;
+            } else {
+                DOM.tabOverview.className = "px-4 py-1.5 rounded-md text-sm font-bold bg-blue-100 text-blue-700 transition-colors";
+                DOM.tabContract.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors";
+                DOM.formTitle.innerHTML = `<i data-lucide="layout" class="w-5 h-5 text-blue-600 inline-block align-middle pb-1"></i> 개요서 정보`;
+            }
+            lucide.createIcons();
+            
+            // 공사명, 공사현장은 폼에 항상 노출하여 수기 입력 가능하게 함
+            DOM.projectForm.innerHTML = '';
+            const fieldsToRender = ALL_FIELDS.filter(f => f.type === currentDocType || f.id === 'projectName' || f.id === 'location'); 
+            const uniqueFields = [...new Map(fieldsToRender.map(item => [item['id'], item])).values()];
+
+            uniqueFields.forEach(field => {
+                const div = document.createElement('div');
+                div.className = field.colSpan === 2 ? "md:col-span-2 space-y-1.5" : "space-y-1.5";
+                div.innerHTML = `
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">${field.label}</label>
+                    <input type="text" id="input_${field.id}" placeholder="${field.label} 입력..." 
+                           class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-800 shadow-sm transition-all">
+                `;
+                DOM.projectForm.appendChild(div);
+            });
+        }
+
+        // Edit Modal Form Render (모든 필드 노출)
+        function initEditForm() {
+            DOM.editProjectForm.innerHTML = '';
+            
+            const groups = [...new Set(ALL_FIELDS.map(f => f.group))];
+            groups.forEach(groupName => {
+                const groupHeader = document.createElement('div');
+                groupHeader.className = "md:col-span-2 mt-4 first:mt-0 pb-2 border-b border-slate-200";
+                groupHeader.innerHTML = `<h4 class="font-bold text-slate-700 text-sm flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> ${groupName}</h4>`;
+                DOM.editProjectForm.appendChild(groupHeader);
+
+                ALL_FIELDS.filter(f => f.group === groupName).forEach(field => {
+                    const div = document.createElement('div');
+                    div.className = field.colSpan === 2 ? "md:col-span-2 space-y-1.5" : "space-y-1.5";
+                    div.innerHTML = `
+                        <label class="block text-xs font-bold text-slate-500 uppercase pl-1">${field.label}</label>
+                        <input type="text" id="edit_${field.id}" placeholder="${field.label} 정보 없음" 
+                               class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-800 transition-all">
+                    `;
+                    DOM.editProjectForm.appendChild(div);
+                });
+            });
+        }
+
+        /* ================= 날짜 파싱 및 필터링 ================= */
+        // 날짜 파싱 로직 강화
+        function isPastEndDate(dateStr) {
+            if (!dateStr || dateStr === "정보 없음" || dateStr.trim() === "") return false;
+            // 숫자만 추출하여 날짜 생성 (예: 2026년 4월 24일 -> [2026, 4, 24])
+            const matches = dateStr.match(/\d+/g);
+            if (matches && matches.length >= 3) {
+                const year = parseInt(matches[0]);
+                const month = parseInt(matches[1]) - 1; // JS months are 0-indexed
+                const day = parseInt(matches[2]);
+                const endDate = new Date(year, month, day);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                return endDate < today;
+            }
+            return false;
+        }
+
+        /* ================= 테이블 렌더링 로직 ================= */
+        let draggedColumn = null;
+
+        function renderTable() {
+            DOM.tableHeaderRow.innerHTML = '';
+            
+            visibleColumns.forEach((colId) => {
+                const field = ALL_FIELDS.find(f => f.id === colId);
+                if (!field) return;
+
+                const th = document.createElement('th');
+                th.className = "px-4 py-4 border-b border-slate-200 relative group truncate select-none";
+                th.style.width = columnWidths[colId] ? `${columnWidths[colId]}px` : '150px';
+                th.draggable = true;
+                th.innerHTML = `${field.label}<div class="resizer" data-id="${colId}"></div>`;
+
+                th.addEventListener('dragstart', () => { draggedColumn = colId; th.classList.add('dragging'); });
+                th.addEventListener('dragend', () => th.classList.remove('dragging'));
+                th.addEventListener('dragover', (e) => e.preventDefault());
+                th.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedColumn && draggedColumn !== colId) {
+                        const fromIdx = visibleColumns.indexOf(draggedColumn);
+                        const toIdx = visibleColumns.indexOf(colId);
+                        visibleColumns.splice(fromIdx, 1);
+                        visibleColumns.splice(toIdx, 0, draggedColumn);
+                        localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
+                        renderTable();
+                    }
+                });
+                DOM.tableHeaderRow.appendChild(th);
+            });
+
+            const actionTh = document.createElement('th');
+            actionTh.className = "px-4 py-4 w-24 text-center border-b border-slate-200";
+            actionTh.textContent = "관리";
+            DOM.tableHeaderRow.appendChild(actionTh);
+
+            setupResizers();
+
+            DOM.tableBody.innerHTML = '';
+            
+            // 준공일 기준 완료 프로젝트 필터링
+            let filteredProjects = projects;
+            if (hideCompleted) {
+                filteredProjects = projects.filter(p => !isPastEndDate(p.endDate));
+            }
+
+            if (filteredProjects.length === 0) {
+                DOM.tableLoading.classList.add('hidden');
+                DOM.tableEmpty.classList.remove('hidden');
+                DOM.emptyMessage.textContent = hideCompleted && projects.length > 0 
+                    ? "완료된 프로젝트가 숨겨져 있습니다." 
+                    : "등록된 프로젝트가 없습니다.";
+                return;
+            }
+
+            DOM.tableEmpty.classList.add('hidden');
+            const sortedProjects = [...filteredProjects].sort((a, b) => b.createdAt - a.createdAt);
+
+            sortedProjects.forEach(project => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/50 transition-colors group";
+                
+                visibleColumns.forEach(colId => {
+                    const field = ALL_FIELDS.find(f => f.id === colId);
+                    if (!field) return;
+
+                    const td = document.createElement('td');
+                    td.className = "px-4 py-3 border-b border-slate-100 truncate";
+                    td.style.maxWidth = columnWidths[colId] ? `${columnWidths[colId]}px` : '150px';
+                    
+                    const value = project[colId];
+                    if (value === "정보 없음") {
+                        td.innerHTML = `<span class="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded">정보 없음</span>`;
+                    } else if (colId === 'projectName') {
+                        td.innerHTML = `<span class="font-bold text-slate-800">${value || '-'}</span>`;
+                    } else {
+                        td.textContent = value || '-';
+                    }
+                    tr.appendChild(td);
+                });
+
+                // 수정 & 삭제 버튼 영역
+                const actionTd = document.createElement('td');
+                actionTd.className = "px-4 py-3 border-b border-slate-100 text-center";
+                actionTd.innerHTML = `
+                    <div class="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="window.openEdit('${project.id}')" class="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors" title="수정">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="window.requestDelete('${project.id}')" class="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="삭제">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                tr.appendChild(actionTd);
+                DOM.tableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function setupResizers() {
+            const resizers = document.querySelectorAll('.resizer');
+            let currentResizer, startX, startWidth, colId, targetTh;
+
+            const onMouseMove = (e) => {
+                const newWidth = startWidth + (e.pageX - startX);
+                targetTh.style.width = `${newWidth}px`;
+                columnWidths[colId] = newWidth;
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                if(currentResizer) currentResizer.classList.remove('resizing');
+                localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+                renderTable(); 
+            };
+
+            resizers.forEach(resizer => {
+                resizer.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    currentResizer = e.target;
+                    currentResizer.classList.add('resizing');
+                    targetTh = currentResizer.parentElement;
+                    colId = currentResizer.getAttribute('data-id');
+                    startX = e.pageX;
+                    startWidth = targetTh.offsetWidth;
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        }
+
+        /* ================= CRUD 로직 ================= */
+        let projectToDelete = null;
+
+        // 1. 삭제 모달 및 동작
+        window.requestDelete = (docId) => {
+            projectToDelete = docId;
+            document.getElementById('confirmModal').classList.add('active');
+            document.getElementById('confirmModal').classList.remove('hidden');
+        };
+        document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
+            document.getElementById('confirmModal').classList.remove('active');
+            document.getElementById('confirmModal').classList.add('hidden');
+        });
+        document.getElementById('okConfirmBtn').addEventListener('click', async () => {
+            if(!currentUser || !projectToDelete) return;
+            document.getElementById('confirmModal').classList.remove('active');
+            document.getElementById('confirmModal').classList.add('hidden');
+            try {
+                await deleteDoc(doc(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects', projectToDelete));
+                showToast("삭제되었습니다.");
+            } catch (err) { showToast("삭제 실패", true); }
+        });
+
+        // 2. 수정 모달 및 동작
+        window.openEdit = (docId) => {
+            const project = projects.find(p => p.id === docId);
+            if (!project) return;
+            
+            editingProjectId = docId;
+            ALL_FIELDS.forEach(field => {
+                const input = document.getElementById(`edit_${field.id}`);
+                if (input) input.value = project[field.id] || "";
+            });
+            
+            DOM.editModal.classList.remove('hidden');
+            DOM.editModal.classList.add('active');
+        };
+
+        const closeEditModal = () => {
+            DOM.editModal.classList.add('hidden');
+            DOM.editModal.classList.remove('active');
+            editingProjectId = null;
+        };
+        DOM.closeEditBtn.addEventListener('click', closeEditModal);
+        DOM.cancelEditBtn.addEventListener('click', closeEditModal);
+
+        DOM.saveEditBtn.addEventListener('click', async () => {
+            if (!currentUser || !editingProjectId) return;
+            
+            const updatedData = {};
+            ALL_FIELDS.forEach(field => {
+                const input = document.getElementById(`edit_${field.id}`);
+                if (input) updatedData[field.id] = input.value.trim();
+            });
+
+            DOM.saveEditBtn.disabled = true;
+            DOM.saveEditBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 저장중...`;
+            
+            try {
+                await updateDoc(doc(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects', editingProjectId), updatedData);
+                showToast("성공적으로 수정되었습니다.");
+                closeEditModal();
+            } catch (err) {
+                showToast("수정 실패", true);
+            } finally {
+                DOM.saveEditBtn.disabled = false;
+                DOM.saveEditBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> 수정 사항 저장`;
+                lucide.createIcons();
+            }
+        });
+
+        function subscribeData() {
+            if (!currentUser) return;
+            DOM.tableLoading.classList.remove('hidden');
+            DOM.tableEmpty.classList.add('hidden');
+
+            const projectsRef = collection(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects');
+            unsubscribeDb = onSnapshot(projectsRef, (snapshot) => {
+                projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                DOM.tableLoading.classList.add('hidden');
+                renderTable();
+            }, (error) => { DOM.tableLoading.classList.add('hidden'); });
+        }
+
+        async function initializeAuth() {
+            try {
+                let customTokenSuccess = false;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try { await signInWithCustomToken(auth, __initial_auth_token); customTokenSuccess = true; } catch (e) {}
+                }
+                if (!customTokenSuccess) await signInAnonymously(auth);
+            } catch (e) {
+                if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation') {
+                    document.getElementById('criticalErrorBanner').classList.remove('hidden');
+                    document.getElementById('criticalErrorText').innerHTML = `
+                        Firebase 프로젝트(<code>project-list-21920</code>)에서 익명 로그인이 꺼져있습니다.<br>
+                        1. <a href="https://console.firebase.google.com/" target="_blank" class="underline font-bold text-blue-700">Firebase 콘솔</a> 이동<br>
+                        2. Authentication > Sign-in method 탭 > <strong>익명(Anonymous)</strong> 사용 설정 및 저장
+                    `;
+                }
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) subscribeData();
+            else if(unsubscribeDb) unsubscribeDb();
+        });
+
+        /* ================= 파일 업로드 및 AI 스캔 ================= */
+        DOM.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            mimeType = file.type;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                base64File = e.target.result.split(',')[1];
+                DOM.uploadArea.classList.add('hidden');
+                DOM.previewContainer.classList.remove('hidden');
+                
+                if (mimeType === 'application/pdf') {
+                    DOM.pdfPreview.src = e.target.result; DOM.pdfPreview.classList.remove('hidden'); DOM.imgPreview.classList.add('hidden');
+                } else {
+                    DOM.imgPreview.src = e.target.result; DOM.imgPreview.classList.remove('hidden'); DOM.pdfPreview.classList.add('hidden');
+                }
+
+                DOM.scanBtn.disabled = false;
+                DOM.scanBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+                DOM.scanBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                DOM.scanBtnText.textContent = "AI로 분석하기";
+            };
+            reader.readAsDataURL(file);
+        });
+
+        DOM.scanBtn.addEventListener('click', async () => {
+            if (!base64File) return;
+
+            DOM.scanBtn.disabled = true;
+            DOM.scanBtn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-blue-400 text-white";
+            DOM.scanBtnText.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block align-middle"></i> 분석 중...`;
+            DOM.scanError.classList.add('hidden');
+
+            try {
+                // 요구사항 반영: 공사명은 계약서에서, 공사현장 및 지역/지구/주용도는 개요서에서 타겟 추출
+                let userPrompt = "";
+                if (currentDocType === 'contract') {
+                    userPrompt = `계약서에서 추출:
+키 값(영문): "projectName" (공사명), "contractAmount" (계약금액), "contractDate" (계약일), "startDate" (착공일), "endDate" (준공일), "clientName" (도급인/발주처), "clientCEO" (도급인 대표자), "contractorName" (수급인/시공사), "supplyValue" (공급가액), "vat" (부가가치세). 찾을 수 없으면 빈 문자열("").`;
+                } else {
+                    userPrompt = `개요서에서 추출:
+키 값(영문): "location" (대지위치/공사현장), "siteArea" (대지면적), "totalFloorArea" (연면적), "buildingArea" (건축면적), "maxHeight" (최고높이), "floors" (층수), "zone" (지역/지구), "mainPurpose" (주용도). 찾을 수 없으면 빈 문자열("").`;
+                }
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userPrompt }, { inlineData: { mimeType: mimeType || "application/pdf", data: base64File } }] }],
+                        systemInstruction: { parts: [{ text: "Valid JSON only. No markdown." }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!response.ok) throw new Error("API 호출 오류");
+                const text = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
+                const data = JSON.parse(text);
+                
+                const currentFields = ALL_FIELDS.filter(f => f.type === currentDocType || f.id === 'projectName' || f.id === 'location');
+                currentFields.forEach(field => {
+                    const input = document.getElementById(`input_${field.id}`);
+                    if (input && data[field.id]) {
+                        input.value = data[field.id];
+                        input.classList.remove('text-red-500', 'bg-red-50');
+                        input.classList.add('bg-green-50', 'border-green-300');
+                        setTimeout(() => input.classList.remove('bg-green-50', 'border-green-300'), 1500);
+                    } else if (input && !input.value) {
+                        // AI가 추출하지 않은 타겟 문서의 항목만 정보 없음 표시
+                        if (field.type === currentDocType) {
+                            input.value = "정보 없음";
+                            input.classList.add('text-red-500', 'font-bold', 'bg-red-50');
+                        }
+                    }
+                });
+
+                DOM.scanBtnText.textContent = "추출 완료!";
+                DOM.scanBtn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-green-500 text-white";
+            } catch (err) {
+                DOM.scanErrorMsg.textContent = `분석 실패`;
+                DOM.scanError.classList.remove('hidden');
+                DOM.scanBtnText.textContent = "다시 시도";
+                DOM.scanBtn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-blue-600 text-white";
+                DOM.scanBtn.disabled = false;
+            }
+        });
+
+        function toggleAddModal(show) {
+            if (show) {
+                DOM.addModal.classList.add('active');
+                switchTab('contract'); 
+            } else {
+                DOM.addModal.classList.remove('active');
+                base64File = null; DOM.fileInput.value = '';
+                DOM.uploadArea.classList.remove('hidden'); DOM.previewContainer.classList.add('hidden');
+                DOM.scanBtn.disabled = true; DOM.scanBtn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed";
+                DOM.scanBtnText.textContent = "문서 업로드 대기중...";
+                DOM.scanError.classList.add('hidden');
+            }
+        }
+
+        DOM.openModalBtn.addEventListener('click', () => toggleAddModal(true));
+        DOM.closeModalBtn.addEventListener('click', () => toggleAddModal(false));
+        DOM.cancelModalBtn.addEventListener('click', () => toggleAddModal(false));
+
+        DOM.projectForm.addEventListener('input', (e) => {
+            if (e.target.tagName === 'INPUT') {
+                e.target.classList.remove('text-red-500', 'font-bold', 'bg-red-50');
+                if (e.target.value === "정보 없음") e.target.value = "";
+            }
+        });
+
+        DOM.saveProjectBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+            const newProject = { createdAt: Date.now() };
+            
+            // 저장 시점에 화면에 보이는 인풋들만 수집
+            const inputs = DOM.projectForm.querySelectorAll('input');
+            let hasData = false;
+            inputs.forEach(input => {
+                const id = input.id.replace('input_', '');
+                const val = input.value.trim();
+                newProject[id] = val;
+                if(val && val !== "정보 없음") hasData = true;
+            });
+
+            if (!hasData) return showToast("저장할 정보가 없습니다.", true);
+
+            DOM.saveProjectBtn.disabled = true;
+            DOM.saveProjectBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 저장중...`;
+
+            try {
+                await addDoc(collection(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects'), newProject);
+                toggleAddModal(false);
+                showToast("저장되었습니다.");
+            } catch (err) { showToast("저장 실패", true); } 
+            finally {
+                DOM.saveProjectBtn.disabled = false;
+                DOM.saveProjectBtn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> 등록하기`;
+            }
+        });
+
+        initDropdown();
+        switchTab('contract');
+        initEditForm();
+        lucide.createIcons();
+        initializeAuth();
+    </script>
+</body>
+</html>
