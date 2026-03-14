@@ -23,13 +23,13 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen overflow-x-hidden">
 
-    <!-- 🔒 구글 로그인 오버레이 (비로그인 시 화면 가림) -->
+    <!-- 1차 잠금: 구글 로그인 오버레이 -->
     <div id="loginOverlay" class="fixed inset-0 bg-slate-900/95 z-[200] flex flex-col items-center justify-center text-white backdrop-blur-sm">
         <div class="bg-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-700 mx-4">
             <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(37,99,235,0.5)]">
                 <i data-lucide="building-2" class="w-10 h-10 text-white"></i>
             </div>
-            <h2 class="text-2xl font-bold mb-3 text-slate-100">팀 공용 대시보드</h2>
+            <h2 class="text-2xl font-bold mb-3 text-slate-100">팀 공용 프로젝트 관리</h2>
             <p class="text-slate-400 mb-8 text-sm leading-relaxed">
                 접근 권한이 있는 관리자 및 팀원 전용 시스템입니다.<br>
                 아래 버튼을 눌러 회사 구글 계정으로 로그인하세요.
@@ -42,7 +42,21 @@
         </div>
     </div>
 
-    <!-- 강력한 인증/DB 에러 배너 -->
+    <!-- 2차 잠금: 보안 비밀번호 오버레이 -->
+    <div id="passwordOverlay" class="fixed inset-0 bg-slate-900/95 z-[250] hidden flex-col items-center justify-center text-white backdrop-blur-sm">
+        <div class="bg-slate-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center border border-slate-700 mx-4">
+            <div class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(5,150,105,0.5)]">
+                <i data-lucide="lock" class="w-8 h-8 text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-slate-100">보안 비밀번호 입력</h2>
+            <p class="text-slate-400 mb-6 text-sm">팀 공용 데이터에 접근하기 위해<br>비밀번호를 입력해주세요.</p>
+            <input type="password" id="appPasswordInput" placeholder="비밀번호 입력" class="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-center text-white mb-4 tracking-widest font-bold">
+            <button id="verifyPasswordBtn" class="w-full py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg">프로젝트 관리 접속</button>
+            <p id="passwordErrorText" class="text-red-400 text-xs mt-4 hidden font-bold"><i data-lucide="alert-circle" class="w-3 h-3 inline-block align-middle mr-1"></i>비밀번호가 일치하지 않습니다.</p>
+        </div>
+    </div>
+
+    <!-- 강력한 에러 배너 -->
     <div id="criticalErrorBanner" class="hidden fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-[150] bg-red-50 border-2 border-red-500 text-red-800 p-5 rounded-2xl shadow-2xl flex items-start gap-4 transition-all">
         <i data-lucide="alert-triangle" class="w-8 h-8 flex-shrink-0 mt-0.5 text-red-600 animate-pulse"></i>
         <div class="flex-1">
@@ -54,8 +68,13 @@
         </button>
     </div>
 
-    <!-- 메인 대시보드 화면 -->
-    <div class="max-w-[1400px] mx-auto p-4 md:p-8">
+    <!-- 테스트 모드 알림 배너 -->
+    <div id="testModeBanner" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 text-center text-sm font-bold shadow-md relative z-40">
+        🚧 현재 로컬 테스트 모드 (로그인 패스, 브라우저 임시저장) - 깃허브 올릴 땐 IS_GITHUB_MODE 를 true로 변경하세요!
+    </div>
+
+    <!-- 메인 화면 -->
+    <div class="max-w-[1400px] mx-auto p-4 md:p-8 relative z-10">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold flex items-center gap-3 text-slate-800">
@@ -76,7 +95,7 @@
                     <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> 보기 옵션
                 </button>
                 
-                <div id="viewOptionsDropdown" class="hidden absolute top-full right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-2xl shadow-xl z-20 p-5">
+                <div id="viewOptionsDropdown" class="hidden absolute top-full right-0 mt-2 w-[400px] bg-white border border-slate-200 rounded-2xl shadow-xl z-20 p-5">
                     <label class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100 cursor-pointer bg-slate-50 p-3 rounded-xl hover:bg-slate-100 transition-colors">
                         <input type="checkbox" id="hideCompletedToggle" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
                         <span class="text-sm font-bold text-slate-800 flex-1">준공 완료된 프로젝트 숨기기</span>
@@ -104,7 +123,7 @@
             
             <div id="tableLoading" class="flex flex-col items-center justify-center py-24 text-blue-500">
                 <i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i>
-                <p class="text-sm font-bold text-slate-600">공용 데이터베이스 동기화 중...</p>
+                <p class="text-sm font-bold text-slate-600">데이터 불러오는 중...</p>
             </div>
 
             <div id="tableEmpty" class="hidden flex flex-col items-center justify-center py-24 text-slate-400">
@@ -117,7 +136,7 @@
         </div>
     </div>
 
-    <!-- 현장 추가 모달 팝업 -->
+    <!-- 현장 추가 모달 -->
     <div id="addModal" class="modal fixed inset-0 bg-slate-900/60 z-[50] items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -132,6 +151,7 @@
             <div class="flex-1 overflow-hidden flex flex-col lg:flex-row bg-white">
                 <div class="w-full lg:w-5/12 p-6 border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col gap-6 overflow-y-auto bg-slate-50/50">
                     
+                    <!-- 계약서 등록 -->
                     <div>
                         <h3 class="font-bold text-blue-800 mb-2 flex items-center gap-1.5"><i data-lucide="file-signature" class="w-4 h-4"></i> 공사 계약서 등록</h3>
                         <div id="uploadAreaContract" class="relative border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center hover:bg-blue-50/80 cursor-pointer group mb-3 min-h-[120px] transition-colors">
@@ -141,7 +161,7 @@
                             </div>
                             <p class="font-bold text-blue-800 text-sm">계약서 파일 첨부</p>
                         </div>
-                        <div id="previewContainerContract" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-white relative mb-3 shadow-inner">
+                        <div id="previewContainerContract" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-slate-100 relative mb-3 shadow-inner flex items-center justify-center">
                             <embed id="pdfPreviewContract" class="hidden w-full h-full" type="application/pdf">
                             <img id="imgPreviewContract" class="hidden w-full h-full object-contain p-2">
                         </div>
@@ -152,6 +172,7 @@
 
                     <div class="border-t border-slate-200"></div>
 
+                    <!-- 개요서 등록 -->
                     <div>
                         <h3 class="font-bold text-emerald-800 mb-2 flex items-center gap-1.5"><i data-lucide="layout-template" class="w-4 h-4"></i> 공사 개요서 등록</h3>
                         <div id="uploadAreaOverview" class="relative border-2 border-dashed border-emerald-300 bg-emerald-50/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/80 cursor-pointer group mb-3 min-h-[120px] transition-colors">
@@ -161,7 +182,7 @@
                             </div>
                             <p class="font-bold text-emerald-800 text-sm">개요서 파일 첨부</p>
                         </div>
-                        <div id="previewContainerOverview" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-white relative mb-3 shadow-inner">
+                        <div id="previewContainerOverview" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-slate-100 relative mb-3 shadow-inner flex items-center justify-center">
                             <embed id="pdfPreviewOverview" class="hidden w-full h-full" type="application/pdf">
                             <img id="imgPreviewOverview" class="hidden w-full h-full object-contain p-2">
                         </div>
@@ -186,7 +207,7 @@
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
                 <button id="cancelModalBtn" class="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
                 <button id="saveProjectBtn" class="px-8 py-3 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all hover:-translate-y-0.5">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i> 공용 DB에 등록
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> 프로젝트 등록
                 </button>
             </div>
         </div>
@@ -203,11 +224,9 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
             <div class="flex-1 overflow-y-auto p-6 bg-white">
                 <form id="editProjectForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5"></form>
             </div>
-            
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
                 <button id="cancelEditBtn" class="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
                 <button id="saveEditBtn" class="px-8 py-3 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all hover:-translate-y-0.5">
@@ -224,7 +243,7 @@
                 <i data-lucide="trash-2" class="w-8 h-8"></i>
             </div>
             <h3 class="text-xl font-bold text-slate-800 mb-2">프로젝트 삭제</h3>
-            <p class="text-sm text-slate-500 mb-8 leading-relaxed">이 프로젝트를 공용 DB에서<br>정말 영구적으로 삭제하시겠습니까?</p>
+            <p class="text-sm text-slate-500 mb-8 leading-relaxed">이 프로젝트를 영구적으로 삭제하시겠습니까?</p>
             <div class="flex gap-3 w-full">
                 <button id="cancelConfirmBtn" class="flex-1 px-4 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">취소</button>
                 <button id="okConfirmBtn" class="flex-1 px-4 py-3.5 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-colors">삭제하기</button>
@@ -232,13 +251,20 @@
         </div>
     </div>
 
+    <!-- 모듈 스크립트 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const apiKey = "AIzaSyBBGQE_o7WRPvg6RlOttkXyNFkD8vbQnF0"; 
-        
+        // =========================================================================
+        // 💡 마법의 스위치: 현재 테스트 환경이므로 false. 깃허브 올릴 때만 true로 변경하세요!
+        // =========================================================================
+        const IS_GITHUB_MODE = true; 
+
+        const CANVAS_API_KEY = ""; 
+        const USER_API_KEY = "AIzaSyBBGQE_o7WRPvg6RlOttkXyNFkD8vbQnF0"; 
+
         const firebaseConfig = {
             apiKey: "AIzaSyDL5m8zW1PF6Y_PBHGV7mM4NoquTmrt0RM",
             authDomain: "project-list-21920.firebaseapp.com",
@@ -267,15 +293,26 @@
         const ALL_FIELDS = [
             { id: "projectName", label: "공사명", default: true, type: 'contract', group: '기본 정보', colSpan: 2 },
             { id: "location", label: "공사현장", default: true, type: 'overview', group: '기본 정보', colSpan: 2 },
-            { id: "contractAmount", label: "계약금액", default: true, type: 'contract', group: '계약 금액' },
-            { id: "supplyValue", label: "공급가액", default: false, type: 'contract', group: '계약 금액' },
-            { id: "vat", label: "부가가치세", default: false, type: 'contract', group: '계약 금액' },
-            { id: "contractDate", label: "계약일", default: true, type: 'contract', group: '일정 관리' },
-            { id: "startDate", label: "착공일", default: true, type: 'contract', group: '일정 관리' },
-            { id: "endDate", label: "준공일", default: true, type: 'contract', group: '일정 관리' },
-            { id: "clientName", label: "도급인(발주처)", default: true, type: 'contract', group: '업체 정보' },
-            { id: "clientCEO", label: "도급인 대표", default: false, type: 'contract', group: '업체 정보' },
-            { id: "contractorName", label: "수급인(시공사)", default: false, type: 'contract', group: '업체 정보' },
+            
+            { id: "contractAmount", label: "계약금액", default: true, type: 'contract', group: '계약 정보' },
+            { id: "supplyValue", label: "공급가액", default: false, type: 'contract', group: '계약 정보' },
+            { id: "vat", label: "부가가치세", default: false, type: 'contract', group: '계약 정보' },
+            { id: "contractDate", label: "계약일", default: true, type: 'contract', group: '계약 정보' },
+            { id: "startDate", label: "착공일", default: true, type: 'contract', group: '계약 정보' },
+            { id: "endDate", label: "준공일", default: true, type: 'contract', group: '계약 정보' },
+            
+            { id: "clientName", label: "도급인(발주처)", default: true, type: 'contract', group: '계약자' },
+            { id: "clientCEO", label: "도급인 대표", default: false, type: 'contract', group: '계약자' },
+            { id: "contractorName", label: "수급인(시공사)", default: false, type: 'contract', group: '계약자' },
+            { id: "contractorCEO", label: "수급인 대표", default: false, type: 'contract', group: '계약자' },
+
+            { id: "siteManager", label: "현장대리인", default: false, type: 'contract', group: '건설기술인' },
+            { id: "qualityManager", label: "품질관리자", default: false, type: 'contract', group: '건설기술인' },
+            { id: "safetyManager", label: "안전관리자", default: false, type: 'contract', group: '건설기술인' },
+            { id: "otherEngineer1", label: "기타기술인1", default: false, type: 'contract', group: '건설기술인' },
+            { id: "otherEngineer2", label: "기타기술인2", default: false, type: 'contract', group: '건설기술인' },
+            { id: "otherEngineer3", label: "기타기술인3", default: false, type: 'contract', group: '건설기술인' },
+
             { id: "siteArea", label: "대지면적", default: false, type: 'overview', group: '건축 개요' },
             { id: "totalFloorArea", label: "연면적", default: false, type: 'overview', group: '건축 개요' },
             { id: "buildingArea", label: "건축면적", default: false, type: 'overview', group: '건축 개요' },
@@ -308,6 +345,12 @@
             userInfo: document.getElementById('userInfo'),
             logoutBtn: document.getElementById('logoutBtn'),
             userEmailDisplay: document.getElementById('userEmailDisplay'),
+            testModeBanner: document.getElementById('testModeBanner'),
+
+            passwordOverlay: document.getElementById('passwordOverlay'),
+            appPasswordInput: document.getElementById('appPasswordInput'),
+            verifyPasswordBtn: document.getElementById('verifyPasswordBtn'),
+            passwordErrorText: document.getElementById('passwordErrorText'),
 
             viewOptionsBtn: document.getElementById('viewOptionsBtn'),
             viewOptionsDropdown: document.getElementById('viewOptionsDropdown'),
@@ -347,7 +390,7 @@
             groups.forEach(groupName => {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = "mb-4";
-                groupDiv.innerHTML = `<div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 pb-1 border-b border-slate-100">${groupName}</div>`;
+                groupDiv.innerHTML = `<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 pb-1 border-b border-slate-100">${groupName}</div>`;
                 
                 const gridDiv = document.createElement('div');
                 gridDiv.className = "grid grid-cols-2 gap-2";
@@ -357,7 +400,7 @@
                     const label = document.createElement('label');
                     label.className = "flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors";
                     label.innerHTML = `
-                        <input type="checkbox" class="column-toggle w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${field.id}" ${isChecked ? 'checked' : ''}>
+                        <input type="checkbox" class="column-toggle w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${field.id}" ${isChecked ? 'checked' : ''}>
                         <span class="text-xs font-bold text-slate-700 select-none truncate" title="${field.label}">${field.label}</span>
                     `;
                     gridDiv.appendChild(label);
@@ -548,220 +591,273 @@
             });
         }
 
-        /* ================= 🔒 구글 로그인 및 화이트리스트(허용 권한) 로직 ================= */
-
-        DOM.googleLoginBtn.addEventListener('click', async () => {
-            try {
-                DOM.googleLoginBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 인증 중...`;
-                lucide.createIcons();
-                await signInWithPopup(auth, googleProvider);
-            } catch (err) {
-                console.error("Popup Error: ", err);
-                const banner = document.getElementById('criticalErrorBanner');
-                banner.classList.remove('hidden');
-                
-                if (err.code === 'auth/unauthorized-domain') {
-                    document.getElementById('criticalErrorTitle').innerHTML = "⚠️ 테스트 환경(미리보기)에서는 로그인이 제한됩니다!";
-                    document.getElementById('criticalErrorText').innerHTML = `
-                        현재 이 화면(미리보기 창)은 보안을 위해 Firebase 로그인이 차단되어 있습니다.<br>
-                        <strong>정상적인 테스트를 원하시면, 이 코드를 회원님의 깃허브에 업데이트하신 후,<br>
-                        <a href="https://hongstar2776-cmyk.github.io/" target="_blank" class="underline text-blue-700 font-bold">hongstar2776-cmyk.github.io</a> 에 접속해서 로그인해 보세요!</strong><br>
-                        (깃허브 주소는 이미 정상적으로 승인 처리되어 있으므로 오류 없이 접속됩니다.)
-                    `;
-                } else if(err.code !== 'auth/popup-closed-by-user') {
-                     showToast(`로그인 실패: ${err.message}`, true);
-                }
-                
-                DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
+        function checkPasswordAndLoadData(isGithub) {
+            if (sessionStorage.getItem('appUnlocked') === 'true') {
+                DOM.passwordOverlay.classList.add('hidden');
+                if (isGithub) subscribeData(); else loadLocalProjects();
+                return;
             }
-        });
 
+            DOM.passwordOverlay.classList.remove('hidden');
+            DOM.passwordOverlay.classList.add('flex');
 
-        DOM.logoutBtn.addEventListener('click', () => {
-            if(confirm("정말 로그아웃 하시겠습니까?")) signOut(auth);
-        });
-
-        async function checkWhitelistAndProceed(user) {
-            const whitelistRef = doc(db, 'artifacts', customAppId, 'public', 'data', 'settings', 'whitelist');
-            try {
-                const snap = await getDoc(whitelistRef);
-                let allowedEmails = [];
+            DOM.verifyPasswordBtn.onclick = () => {
+                const inputVal = DOM.appPasswordInput.value;
+                // 난독화된 올바른 비밀번호 배열 (01041392772 -> +5 Shift)
+                const secret = [53, 54, 53, 57, 54, 56, 62, 55, 60, 60, 55];
                 
-                if (!snap.exists()) {
-                    allowedEmails = [user.email, "hongstar2776@gmail.com"];
-                    allowedEmails = [...new Set(allowedEmails)];
-                    await setDoc(whitelistRef, { emails: allowedEmails });
-                    console.log("초기 화이트리스트가 자동 생성되었습니다.");
-                } else {
-                    allowedEmails = snap.data().emails || [];
-                }
+                const isValid = inputVal.length === secret.length && inputVal.split('').every((c, i) => c.charCodeAt(0) + 5 === secret[i]);
 
-                if (!allowedEmails.includes(user.email)) {
-                    showToast(`접근 거부: ${user.email} 계정은 등록되지 않은 팀원입니다.`, true);
+                if (isValid) {
+                    sessionStorage.setItem('appUnlocked', 'true');
+                    DOM.passwordOverlay.classList.add('hidden');
+                    DOM.passwordOverlay.classList.remove('flex');
+                    DOM.passwordErrorText.classList.add('hidden');
+                    
+                    showToast("보안 인증 완료! 프로젝트 관리에 접속합니다.");
+                    if (isGithub) subscribeData(); else loadLocalProjects();
+                } else {
+                    DOM.passwordErrorText.classList.remove('hidden');
+                    DOM.appPasswordInput.value = '';
+                    DOM.appPasswordInput.focus();
+                }
+            };
+
+            DOM.appPasswordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') DOM.verifyPasswordBtn.click();
+            });
+        }
+
+        if (IS_GITHUB_MODE) {
+            DOM.googleLoginBtn.addEventListener('click', async () => {
+                try {
+                    DOM.googleLoginBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 인증 중...`;
+                    lucide.createIcons();
+                    await signInWithPopup(auth, googleProvider);
+                } catch (err) {
+                    if(err.code !== 'auth/popup-closed-by-user') showToast(`로그인 실패: ${err.message}`, true);
+                    DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
+                }
+            });
+
+            DOM.logoutBtn.addEventListener('click', () => {
+                if(confirm("정말 로그아웃 하시겠습니까?")) {
+                    sessionStorage.removeItem('appUnlocked'); 
+                    signOut(auth);
+                }
+            });
+
+            async function checkWhitelistAndProceed(user) {
+                const whitelistRef = doc(db, 'artifacts', customAppId, 'public', 'data', 'settings', 'whitelist');
+                try {
+                    const snap = await getDoc(whitelistRef);
+                    let allowedEmails = [];
+                    if (!snap.exists()) {
+                        allowedEmails = [user.email, "hongstar2776@gmail.com"];
+                        allowedEmails = [...new Set(allowedEmails)];
+                        await setDoc(whitelistRef, { emails: allowedEmails });
+                    } else {
+                        allowedEmails = snap.data().emails || [];
+                    }
+                    if (!allowedEmails.includes(user.email)) {
+                        showToast(`접근 거부: ${user.email} 계정은 등록되지 않은 팀원입니다.`, true);
+                        await signOut(auth);
+                        return false;
+                    }
+                    return true;
+                } catch (err) {
+                    showToast("권한 확인 오류", true);
                     await signOut(auth);
                     return false;
                 }
-
-                return true;
-            } catch (err) {
-                console.error("Whitelist check error:", err);
-                showToast("권한 확인 중 오류 발생. Firebase DB 규칙을 확인하세요.", true);
-                await signOut(auth);
-                return false;
             }
-        }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const isAllowed = await checkWhitelistAndProceed(user);
-                
-                if (isAllowed) {
-                    currentUser = user;
-                    DOM.loginOverlay.classList.add('hidden'); 
-                    DOM.userInfo.classList.remove('hidden');
-                    DOM.userInfo.classList.add('flex');
-                    DOM.userEmailDisplay.textContent = user.email; 
-                    
-                    showToast("대시보드에 성공적으로 접속했습니다.");
-                    subscribeData(); 
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const isAllowed = await checkWhitelistAndProceed(user);
+                    if (isAllowed) {
+                        currentUser = user;
+                        DOM.loginOverlay.classList.add('hidden'); 
+                        DOM.userInfo.classList.remove('hidden');
+                        DOM.userInfo.classList.add('flex');
+                        DOM.userEmailDisplay.textContent = user.email; 
+                        
+                        checkPasswordAndLoadData(true);
+                    }
+                } else {
+                    currentUser = null;
+                    if(unsubscribeDb) unsubscribeDb();
+                    DOM.loginOverlay.classList.remove('hidden');
+                    DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
+                    DOM.userInfo.classList.add('hidden');
+                    DOM.userInfo.classList.remove('flex');
                 }
-            } else {
-                currentUser = null;
-                if(unsubscribeDb) unsubscribeDb();
-                
-                DOM.loginOverlay.classList.remove('hidden');
-                DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
-                DOM.userInfo.classList.add('hidden');
-                DOM.userInfo.classList.remove('flex');
+            });
+
+            function subscribeData() {
+                if (!currentUser) return;
+                DOM.tableLoading.classList.remove('hidden');
+                DOM.tableEmpty.classList.add('hidden');
+
+                const projectsRef = collection(db, 'artifacts', customAppId, 'public', 'data', 'projects');
+                unsubscribeDb = onSnapshot(projectsRef, (snapshot) => {
+                    projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    DOM.tableLoading.classList.add('hidden');
+                    renderTable();
+                });
             }
-        });
 
+            DOM.saveProjectBtn.addEventListener('click', async () => {
+                if (!currentUser) return;
+                const newProject = { createdAt: Date.now(), authorEmail: currentUser.email };
+                const inputs = DOM.projectForm.querySelectorAll('input');
+                let hasData = false;
+                inputs.forEach(input => {
+                    const id = input.id.replace('input_', '');
+                    const val = input.value.trim();
+                    newProject[id] = val;
+                    if(val && val !== "정보 없음") hasData = true;
+                });
+                if (!hasData) return showToast("저장할 정보가 없습니다.", true);
 
-        /* ================= 📡 공용 데이터베이스 (Public DB) 연동 로직 ================= */
-        function subscribeData() {
-            if (!currentUser) return;
-            DOM.tableLoading.classList.remove('hidden');
-            DOM.tableEmpty.classList.add('hidden');
+                DOM.saveProjectBtn.disabled = true;
+                DOM.saveProjectBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 동기화 중...`;
+                try {
+                    await addDoc(collection(db, 'artifacts', customAppId, 'public', 'data', 'projects'), newProject);
+                    toggleAddModal(false);
+                    showToast("공용 데이터베이스에 저장되었습니다.");
+                } catch (err) { showToast("저장 실패", true); } 
+                finally {
+                    DOM.saveProjectBtn.disabled = false;
+                    DOM.saveProjectBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> 프로젝트 등록`;
+                }
+            });
 
-            const projectsRef = collection(db, 'artifacts', customAppId, 'public', 'data', 'projects');
-            unsubscribeDb = onSnapshot(projectsRef, (snapshot) => {
-                projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            window.requestDelete = (docId) => {
+                projectToDelete = docId;
+                document.getElementById('confirmModal').classList.add('active');
+                document.getElementById('confirmModal').classList.remove('hidden');
+            };
+            document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
+                document.getElementById('confirmModal').classList.remove('active');
+                document.getElementById('confirmModal').classList.add('hidden');
+            });
+            document.getElementById('okConfirmBtn').addEventListener('click', async () => {
+                if(!currentUser || !projectToDelete) return;
+                document.getElementById('confirmModal').classList.remove('active');
+                document.getElementById('confirmModal').classList.add('hidden');
+                try {
+                    await deleteDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', projectToDelete));
+                    showToast("삭제되었습니다.");
+                } catch (err) {}
+            });
+
+            window.openEdit = (docId) => {
+                const project = projects.find(p => p.id === docId);
+                if (!project) return;
+                editingProjectId = docId;
+                ALL_FIELDS.forEach(field => {
+                    const input = document.getElementById(`edit_${field.id}`);
+                    if (input) input.value = project[field.id] || "";
+                });
+                DOM.editModal.classList.remove('hidden');
+                DOM.editModal.classList.add('active');
+            };
+            DOM.closeEditBtn.addEventListener('click', () => { DOM.editModal.classList.remove('active'); DOM.editModal.classList.add('hidden'); });
+            DOM.cancelEditBtn.addEventListener('click', () => { DOM.editModal.classList.remove('active'); DOM.editModal.classList.add('hidden'); });
+
+            DOM.saveEditBtn.addEventListener('click', async () => {
+                if (!currentUser || !editingProjectId) return;
+                const updatedData = {};
+                ALL_FIELDS.forEach(field => {
+                    const input = document.getElementById(`edit_${field.id}`);
+                    if (input) updatedData[field.id] = input.value.trim();
+                });
+                DOM.saveEditBtn.disabled = true;
+                DOM.saveEditBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 저장중...`;
+                try {
+                    await updateDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', editingProjectId), updatedData);
+                    showToast("수정되었습니다.");
+                    DOM.editModal.classList.remove('active');
+                    DOM.editModal.classList.add('hidden');
+                } catch (err) {} 
+                finally {
+                    DOM.saveEditBtn.disabled = false;
+                    DOM.saveEditBtn.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> 수정 사항 적용`;
+                    lucide.createIcons();
+                }
+            });
+
+        } else {
+            DOM.loginOverlay.classList.add('hidden'); 
+            if (DOM.testModeBanner) DOM.testModeBanner.classList.remove('hidden');
+            currentUser = { email: "tester@canvas.com" };
+            
+            checkPasswordAndLoadData(false);
+
+            window.loadLocalProjects = () => {
+                const data = localStorage.getItem('localProjects');
+                projects = data ? JSON.parse(data) : [];
                 DOM.tableLoading.classList.add('hidden');
                 renderTable();
-            }, (error) => { 
-                DOM.tableLoading.classList.add('hidden');
-                console.error("Firestore Listen Error:", error);
-                showToast(`DB 접속 에러: ${error.message}`, true);
+            };
+
+            DOM.saveProjectBtn.addEventListener('click', () => {
+                const newProject = { id: Date.now().toString(), createdAt: Date.now(), authorEmail: currentUser.email };
+                const inputs = DOM.projectForm.querySelectorAll('input');
+                let hasData = false;
+                inputs.forEach(input => {
+                    const id = input.id.replace('input_', '');
+                    const val = input.value.trim();
+                    newProject[id] = val;
+                    if(val && val !== "정보 없음") hasData = true;
+                });
+                if (!hasData) return showToast("저장할 정보가 없습니다.", true);
+
+                projects.push(newProject);
+                localStorage.setItem('localProjects', JSON.stringify(projects));
+                toggleAddModal(false);
+                renderTable();
+                showToast("[테스트 모드] 임시 저장소에 저장되었습니다.");
+            });
+
+            window.requestDelete = (docId) => {
+                if(confirm("이 프로젝트를 정말 삭제하시겠습니까?")) {
+                    projects = projects.filter(p => p.id !== docId);
+                    localStorage.setItem('localProjects', JSON.stringify(projects));
+                    renderTable();
+                    showToast("[테스트 모드] 삭제되었습니다.");
+                }
+            };
+
+            window.openEdit = (docId) => {
+                const project = projects.find(p => p.id === docId);
+                if (!project) return;
+                editingProjectId = docId;
+                ALL_FIELDS.forEach(field => {
+                    const input = document.getElementById(`edit_${field.id}`);
+                    if (input) input.value = project[field.id] || "";
+                });
+                DOM.editModal.classList.remove('hidden');
+                DOM.editModal.classList.add('active');
+            };
+            DOM.closeEditBtn.addEventListener('click', () => { DOM.editModal.classList.remove('active'); DOM.editModal.classList.add('hidden'); });
+            DOM.cancelEditBtn.addEventListener('click', () => { DOM.editModal.classList.remove('active'); DOM.editModal.classList.add('hidden'); });
+
+            DOM.saveEditBtn.addEventListener('click', () => {
+                const idx = projects.findIndex(p => p.id === editingProjectId);
+                if(idx > -1) {
+                    ALL_FIELDS.forEach(field => {
+                        const input = document.getElementById(`edit_${field.id}`);
+                        if (input) projects[idx][field.id] = input.value.trim();
+                    });
+                    localStorage.setItem('localProjects', JSON.stringify(projects));
+                    renderTable();
+                    showToast("[테스트 모드] 성공적으로 수정되었습니다.");
+                    DOM.editModal.classList.remove('active'); DOM.editModal.classList.add('hidden');
+                }
             });
         }
-
-        DOM.saveProjectBtn.addEventListener('click', async () => {
-            if (!currentUser) return showToast("로그인 상태를 확인해주세요.", true);
-            
-            const newProject = { 
-                createdAt: Date.now(),
-                authorEmail: currentUser.email 
-            };
-            
-            const inputs = DOM.projectForm.querySelectorAll('input');
-            let hasData = false;
-            inputs.forEach(input => {
-                const id = input.id.replace('input_', '');
-                const val = input.value.trim();
-                newProject[id] = val;
-                if(val && val !== "정보 없음") hasData = true;
-            });
-
-            if (!hasData) return showToast("저장할 정보가 없습니다.", true);
-
-            DOM.saveProjectBtn.disabled = true;
-            DOM.saveProjectBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 동기화 중...`;
-
-            try {
-                await addDoc(collection(db, 'artifacts', customAppId, 'public', 'data', 'projects'), newProject);
-                toggleAddModal(false);
-                showToast("공용 데이터베이스에 저장되었습니다.");
-            } catch (err) { showToast(`저장 실패: ${err.message}`, true); } 
-            finally {
-                DOM.saveProjectBtn.disabled = false;
-                DOM.saveProjectBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> 공용 DB에 등록`;
-            }
-        });
-
-        let projectToDelete = null;
-        window.requestDelete = (docId) => {
-            projectToDelete = docId;
-            document.getElementById('confirmModal').classList.add('active');
-            document.getElementById('confirmModal').classList.remove('hidden');
-        };
-        document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
-            document.getElementById('confirmModal').classList.remove('active');
-            document.getElementById('confirmModal').classList.add('hidden');
-        });
-        document.getElementById('okConfirmBtn').addEventListener('click', async () => {
-            if(!currentUser || !projectToDelete) return;
-            document.getElementById('confirmModal').classList.remove('active');
-            document.getElementById('confirmModal').classList.add('hidden');
-            try {
-                await deleteDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', projectToDelete));
-                showToast("삭제되었습니다.");
-            } catch (err) { showToast(`삭제 실패: ${err.message}`, true); }
-        });
-
-        window.openEdit = (docId) => {
-            const project = projects.find(p => p.id === docId);
-            if (!project) return;
-            
-            editingProjectId = docId;
-            ALL_FIELDS.forEach(field => {
-                const input = document.getElementById(`edit_${field.id}`);
-                if (input) input.value = project[field.id] || "";
-            });
-            
-            DOM.editModal.classList.remove('hidden');
-            DOM.editModal.classList.add('active');
-        };
-
-        const closeEditModal = () => {
-            DOM.editModal.classList.add('hidden');
-            DOM.editModal.classList.remove('active');
-            editingProjectId = null;
-        };
-        DOM.closeEditBtn.addEventListener('click', closeEditModal);
-        DOM.cancelEditBtn.addEventListener('click', closeEditModal);
-
-        DOM.saveEditBtn.addEventListener('click', async () => {
-            if (!currentUser || !editingProjectId) return;
-            const updatedData = {};
-            ALL_FIELDS.forEach(field => {
-                const input = document.getElementById(`edit_${field.id}`);
-                if (input) updatedData[field.id] = input.value.trim();
-            });
-
-            DOM.saveEditBtn.disabled = true;
-            DOM.saveEditBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 저장중...`;
-            try {
-                await updateDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', editingProjectId), updatedData);
-                showToast("성공적으로 수정되었습니다.");
-                closeEditModal();
-            } catch (err) { showToast(`수정 실패: ${err.message}`, true); } 
-            finally {
-                DOM.saveEditBtn.disabled = false;
-                DOM.saveEditBtn.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> 수정 사항 적용`;
-                lucide.createIcons();
-            }
-        });
-
-
-        /* ================= 🤖 AI 인식 (자동 우회-Fallback 시스템 탑재) ================= */
-        
-        let workingModel = null; 
-        const AI_MODELS_TO_TRY = [
-            "gemini-2.5-flash-preview-09-2025", 
-            "gemini-2.0-flash",                 
-            "gemini-1.5-flash",                 
-            "gemini-1.5-flash-latest"
-        ];
 
         function setupUploader(type) {
             const inputEl = document.getElementById(`fileInput${type}`);
@@ -772,6 +868,8 @@
             const btnEl = document.getElementById(`scanBtn${type}`);
             const textEl = document.getElementById(`scanBtnText${type}`);
             
+            if (!inputEl) return;
+
             inputEl.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -785,11 +883,17 @@
                     areaEl.classList.add('hidden');
                     prevContainerEl.classList.remove('hidden');
                     
-                    if (file.type === 'application/pdf') {
-                        pdfEl.src = evt.target.result; pdfEl.classList.remove('hidden'); imgEl.classList.add('hidden');
+                    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                        pdfEl.src = evt.target.result; 
+                        pdfEl.classList.remove('hidden'); 
+                        imgEl.classList.add('hidden');
                     } else {
-                        imgEl.src = evt.target.result; imgEl.classList.remove('hidden'); pdfEl.classList.add('hidden');
+                        imgEl.src = evt.target.result; 
+                        imgEl.classList.remove('hidden'); 
+                        pdfEl.classList.add('hidden');
                     }
+
+                    inputEl.value = '';
 
                     btnEl.disabled = false;
                     btnEl.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
@@ -814,23 +918,26 @@
             
             btnEl.disabled = true;
             btnEl.className = `w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-white ${isContract ? 'bg-blue-400' : 'bg-emerald-400'}`;
-            textEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block align-middle"></i> 최적의 AI 모델 탐색 및 분석 중...`;
+            textEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block align-middle"></i> 문서를 분석 중입니다...`;
             lucide.createIcons();
 
             try {
                 let userPrompt = isContract 
-                    ? `계약서에서 추출: 키 값(영문): "projectName" (공사명), "contractAmount" (계약금액), "contractDate" (계약일), "startDate" (착공일), "endDate" (준공일), "clientName" (도급인/발주처), "clientCEO" (도급인 대표자), "contractorName" (수급인/시공사), "supplyValue" (공급가액), "vat" (부가가치세). 찾을 수 없으면 빈 문자열("").`
+                    ? `계약서에서 추출: 키 값(영문): "projectName" (공사명), "contractAmount" (계약금액), "supplyValue" (공급가액), "vat" (부가가치세), "contractDate" (계약일), "startDate" (착공일), "endDate" (준공일), "clientName" (도급인/발주처), "clientCEO" (도급인 대표자), "contractorName" (수급인/시공사), "contractorCEO" (수급인 대표), "siteManager" (현장대리인), "qualityManager" (품질관리자), "safetyManager" (안전관리자), "otherEngineer1" (기타기술인1), "otherEngineer2" (기타기술인2), "otherEngineer3" (기타기술인3). 찾을 수 없으면 빈 문자열("").`
                     : `개요서에서 추출: 키 값(영문): "location" (대지위치/공사현장), "siteArea" (대지면적), "totalFloorArea" (연면적), "buildingArea" (건축면적), "maxHeight" (최고높이), "floors" (층수), "zone" (지역/지구), "mainPurpose" (주용도). 찾을 수 없으면 빈 문자열("").`;
+
+                let activeApiKey = IS_GITHUB_MODE ? USER_API_KEY : CANVAS_API_KEY; 
+                
+                const modelsToTry = IS_GITHUB_MODE 
+                    ? ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest"]
+                    : ["gemini-2.5-flash-preview-09-2025"];
 
                 let dataText = null;
                 let lastErrorMessage = "";
-                
-                const modelsToUse = workingModel ? [workingModel] : AI_MODELS_TO_TRY;
 
-                for (const currentModel of modelsToUse) {
+                for (const currentModel of modelsToTry) {
                     try {
-                        console.log(`[AI 자동 탐색] ${currentModel} 모델 시도 중...`);
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`, {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${activeApiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -842,26 +949,20 @@
 
                         if (!response.ok) {
                             const errData = await response.json();
-                            throw new Error(`[${currentModel}] API 에러: ${errData.error?.message}`);
+                            throw new Error(`[${currentModel}] 에러: ${errData.error?.message}`);
                         }
                         
                         const jsonResult = await response.json();
                         dataText = jsonResult.candidates?.[0]?.content?.parts?.[0]?.text;
                         
-                        if(dataText) {
-                            workingModel = currentModel; 
-                            console.log(`🎉 성공! 앞으로 [${workingModel}] 모델을 사용합니다.`);
-                            break; 
-                        }
+                        if(dataText) break; 
                     } catch (e) {
                         console.warn(e.message);
                         lastErrorMessage = e.message;
                     }
                 }
 
-                if(!dataText) {
-                    throw new Error(lastErrorMessage || "접근 가능한 AI 모델이 없습니다.");
-                }
+                if(!dataText) throw new Error(lastErrorMessage || "사용 가능한 AI 모델이 없습니다. API 키를 확인해주세요.");
 
                 const data = JSON.parse(dataText);
                 
@@ -892,18 +993,32 @@
             }
         }
 
-        /* ================= 기타 UI 제어 로직 ================= */
+        const scanContractBtn = document.getElementById('scanBtnContract');
+        if (scanContractBtn) scanContractBtn.addEventListener('click', () => performScan('Contract'));
+        
+        const scanOverviewBtn = document.getElementById('scanBtnOverview');
+        if (scanOverviewBtn) scanOverviewBtn.addEventListener('click', () => performScan('Overview'));
 
         function resetAddModal() {
             filesData = { contract: { base64: null, mimeType: null }, overview: { base64: null, mimeType: null } };
             ['Contract', 'Overview'].forEach(type => {
-                document.getElementById(`fileInput${type}`).value = '';
-                document.getElementById(`uploadArea${type}`).classList.remove('hidden');
-                document.getElementById(`previewContainer${type}`).classList.add('hidden');
+                const fileInput = document.getElementById(`fileInput${type}`);
+                if (fileInput) fileInput.value = '';
+                
+                const uploadArea = document.getElementById(`uploadArea${type}`);
+                if (uploadArea) uploadArea.classList.remove('hidden');
+                
+                const previewContainer = document.getElementById(`previewContainer${type}`);
+                if (previewContainer) previewContainer.classList.add('hidden');
+                
                 const btn = document.getElementById(`scanBtn${type}`);
-                btn.disabled = true;
-                btn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed";
-                document.getElementById(`scanBtnText${type}`).textContent = `${type === 'Contract' ? '계약서' : '개요서'} 업로드 대기중...`;
+                if (btn) {
+                    btn.disabled = true;
+                    btn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed";
+                }
+                
+                const btnText = document.getElementById(`scanBtnText${type}`);
+                if (btnText) btnText.textContent = `${type === 'Contract' ? '계약서' : '개요서'} 업로드 대기중...`;
             });
             renderFullForm('projectForm', false);
         }
