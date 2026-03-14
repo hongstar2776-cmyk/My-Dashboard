@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프로젝트 관리 시스템01</title>
+    <title>팀 공용 프로젝트 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -23,8 +23,27 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen overflow-x-hidden">
 
+    <!-- 🔒 구글 로그인 오버레이 (비로그인 시 화면 가림) -->
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900/95 z-[200] flex flex-col items-center justify-center text-white backdrop-blur-sm">
+        <div class="bg-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-700 mx-4">
+            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(37,99,235,0.5)]">
+                <i data-lucide="building-2" class="w-10 h-10 text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-3 text-slate-100">팀 공용 대시보드</h2>
+            <p class="text-slate-400 mb-8 text-sm leading-relaxed">
+                접근 권한이 있는 관리자 및 팀원 전용 시스템입니다.<br>
+                아래 버튼을 눌러 회사 구글 계정으로 로그인하세요.
+            </p>
+            <button id="googleLoginBtn" class="w-full py-4 px-4 bg-white text-slate-800 font-bold rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-100 transition-all hover:scale-[1.02] shadow-lg">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google">
+                Google 계정으로 로그인
+            </button>
+            <p class="mt-6 text-[11px] text-slate-500">권한 문의: hongstar2776@gmail.com</p>
+        </div>
+    </div>
+
     <!-- 강력한 인증/DB 에러 배너 -->
-    <div id="criticalErrorBanner" class="hidden fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-[100] bg-red-50 border-2 border-red-500 text-red-800 p-5 rounded-2xl shadow-2xl flex items-start gap-4 transition-all">
+    <div id="criticalErrorBanner" class="hidden fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-3xl z-[150] bg-red-50 border-2 border-red-500 text-red-800 p-5 rounded-2xl shadow-2xl flex items-start gap-4 transition-all">
         <i data-lucide="alert-triangle" class="w-8 h-8 flex-shrink-0 mt-0.5 text-red-600 animate-pulse"></i>
         <div class="flex-1">
             <p class="font-extrabold text-lg mb-1" id="criticalErrorTitle">⚠️ 설정 확인이 필요합니다!</p>
@@ -36,38 +55,44 @@
     </div>
 
     <!-- 메인 대시보드 화면 -->
-    <div class="max-w-7xl mx-auto p-4 md:p-8">
+    <div class="max-w-[1400px] mx-auto p-4 md:p-8">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2 text-slate-800">
-                    <i data-lucide="building-2" class="text-blue-600"></i>
-                    프로젝트 관리
+                <h1 class="text-2xl md:text-3xl font-extrabold flex items-center gap-3 text-slate-800">
+                    <div class="p-2 bg-blue-100 rounded-xl"><i data-lucide="building-2" class="text-blue-600 w-6 h-6"></i></div>
+                    프로젝트 관리 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-md font-medium align-middle -mt-1 ml-1">TEAM 공용</span>
                 </h1>
             </div>
             
             <div class="flex items-center gap-3 relative">
-                <button id="viewOptionsBtn" class="flex items-center gap-2 bg-white border border-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+                <!-- 로그인된 유저 정보 -->
+                <div id="userInfo" class="hidden items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm mr-2 transition-all">
+                    <i data-lucide="user-circle" class="w-4 h-4 text-blue-600"></i>
+                    <span id="userEmailDisplay" class="text-xs font-bold text-slate-700"></span>
+                    <button id="logoutBtn" class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ml-1 border border-slate-200 hover:border-red-200">로그아웃</button>
+                </div>
+
+                <button id="viewOptionsBtn" class="flex items-center gap-2 bg-white border border-slate-300 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm">
                     <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> 보기 옵션
                 </button>
                 
-                <div id="viewOptionsDropdown" class="hidden absolute top-full right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl z-20 p-4">
-                    <label class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100 cursor-pointer bg-slate-50 p-2 rounded-lg">
+                <div id="viewOptionsDropdown" class="hidden absolute top-full right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-2xl shadow-xl z-20 p-5">
+                    <label class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100 cursor-pointer bg-slate-50 p-3 rounded-xl hover:bg-slate-100 transition-colors">
                         <input type="checkbox" id="hideCompletedToggle" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500">
                         <span class="text-sm font-bold text-slate-800 flex-1">준공 완료된 프로젝트 숨기기</span>
-                        <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                        <i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>
                     </label>
-
                     <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 px-1">표시할 열 선택</h4>
                     <div id="columnCheckboxes" class="max-h-80 overflow-y-auto pr-2 space-y-4"></div>
                 </div>
 
-                <button id="openModalBtn" class="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-200">
-                    <i data-lucide="plus" class="w-4 h-4 text-white"></i> 현장 추가
+                <button id="openModalBtn" class="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all hover:-translate-y-0.5 shadow-md shadow-blue-200">
+                    <i data-lucide="plus" class="w-4 h-4 text-white"></i> 새 현장 등록
                 </button>
             </div>
         </header>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse whitespace-nowrap table-fixed">
                     <thead>
@@ -77,28 +102,29 @@
                 </table>
             </div>
             
-            <div id="tableLoading" class="flex flex-col items-center justify-center py-20 text-blue-500">
-                <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
-                <p class="mt-3 text-sm text-slate-500 font-medium">데이터를 불러오는 중...</p>
+            <div id="tableLoading" class="flex flex-col items-center justify-center py-24 text-blue-500">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-4"></i>
+                <p class="text-sm font-bold text-slate-600">공용 데이터베이스 동기화 중...</p>
             </div>
 
-            <div id="tableEmpty" class="hidden flex flex-col items-center justify-center py-20 text-slate-400">
-                <div class="bg-slate-100 p-4 rounded-full mb-4">
-                    <i data-lucide="inbox" class="w-8 h-8 text-slate-400"></i>
+            <div id="tableEmpty" class="hidden flex flex-col items-center justify-center py-24 text-slate-400">
+                <div class="bg-slate-100 p-5 rounded-full mb-4">
+                    <i data-lucide="inbox" class="w-10 h-10 text-slate-400"></i>
                 </div>
-                <p class="font-medium text-slate-600" id="emptyMessage">표시할 프로젝트가 없습니다.</p>
+                <p class="font-bold text-slate-600 text-lg" id="emptyMessage">표시할 프로젝트가 없습니다.</p>
+                <p class="text-sm mt-2 text-slate-500">우측 상단의 '새 현장 등록' 버튼을 눌러 첫 문서를 올려보세요.</p>
             </div>
         </div>
     </div>
 
     <!-- 현장 추가 모달 팝업 -->
     <div id="addModal" class="modal fixed inset-0 bg-slate-900/60 z-[50] items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+        <div class="bg-white rounded-3xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h2 class="text-lg font-bold flex items-center gap-2 text-slate-800">
                     <i data-lucide="file-scan" class="text-blue-600"></i> 새 프로젝트 일괄 등록
                 </h2>
-                <button id="closeModalBtn" class="text-slate-400 hover:text-red-500 bg-white rounded-full p-1 border border-slate-200 hover:bg-red-50">
+                <button id="closeModalBtn" class="text-slate-400 hover:text-red-500 bg-white rounded-full p-1.5 border border-slate-200 hover:bg-red-50 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -108,18 +134,18 @@
                     
                     <div>
                         <h3 class="font-bold text-blue-800 mb-2 flex items-center gap-1.5"><i data-lucide="file-signature" class="w-4 h-4"></i> 공사 계약서 등록</h3>
-                        <div id="uploadAreaContract" class="relative border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-xl p-5 flex flex-col items-center justify-center text-center hover:bg-blue-50/80 cursor-pointer group mb-3 min-h-[120px]">
+                        <div id="uploadAreaContract" class="relative border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center hover:bg-blue-50/80 cursor-pointer group mb-3 min-h-[120px] transition-colors">
                             <input type="file" id="fileInputContract" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,image/png,image/jpeg">
-                            <div class="bg-white p-2 rounded-full text-blue-600 mb-2 shadow-sm group-hover:scale-110 transition-transform">
+                            <div class="bg-white p-2.5 rounded-full text-blue-600 mb-2 shadow-sm group-hover:scale-110 transition-transform">
                                 <i data-lucide="upload-cloud" class="w-5 h-5"></i>
                             </div>
                             <p class="font-bold text-blue-800 text-sm">계약서 파일 첨부</p>
                         </div>
-                        <div id="previewContainerContract" class="hidden w-full h-48 border border-slate-200 rounded-xl overflow-hidden bg-white relative mb-3 shadow-inner">
+                        <div id="previewContainerContract" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-white relative mb-3 shadow-inner">
                             <embed id="pdfPreviewContract" class="hidden w-full h-full" type="application/pdf">
                             <img id="imgPreviewContract" class="hidden w-full h-full object-contain p-2">
                         </div>
-                        <button id="scanBtnContract" disabled class="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed">
+                        <button id="scanBtnContract" disabled class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed transition-colors">
                             <i data-lucide="bot" class="w-4 h-4"></i> <span id="scanBtnTextContract">계약서 업로드 대기중...</span>
                         </button>
                     </div>
@@ -128,18 +154,18 @@
 
                     <div>
                         <h3 class="font-bold text-emerald-800 mb-2 flex items-center gap-1.5"><i data-lucide="layout-template" class="w-4 h-4"></i> 공사 개요서 등록</h3>
-                        <div id="uploadAreaOverview" class="relative border-2 border-dashed border-emerald-300 bg-emerald-50/30 rounded-xl p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/80 cursor-pointer group mb-3 min-h-[120px]">
+                        <div id="uploadAreaOverview" class="relative border-2 border-dashed border-emerald-300 bg-emerald-50/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/80 cursor-pointer group mb-3 min-h-[120px] transition-colors">
                             <input type="file" id="fileInputOverview" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,image/png,image/jpeg">
-                            <div class="bg-white p-2 rounded-full text-emerald-600 mb-2 shadow-sm group-hover:scale-110 transition-transform">
+                            <div class="bg-white p-2.5 rounded-full text-emerald-600 mb-2 shadow-sm group-hover:scale-110 transition-transform">
                                 <i data-lucide="upload-cloud" class="w-5 h-5"></i>
                             </div>
                             <p class="font-bold text-emerald-800 text-sm">개요서 파일 첨부</p>
                         </div>
-                        <div id="previewContainerOverview" class="hidden w-full h-48 border border-slate-200 rounded-xl overflow-hidden bg-white relative mb-3 shadow-inner">
+                        <div id="previewContainerOverview" class="hidden w-full h-48 border border-slate-200 rounded-2xl overflow-hidden bg-white relative mb-3 shadow-inner">
                             <embed id="pdfPreviewOverview" class="hidden w-full h-full" type="application/pdf">
                             <img id="imgPreviewOverview" class="hidden w-full h-full object-contain p-2">
                         </div>
-                        <button id="scanBtnOverview" disabled class="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed">
+                        <button id="scanBtnOverview" disabled class="w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed transition-colors">
                             <i data-lucide="bot" class="w-4 h-4"></i> <span id="scanBtnTextOverview">개요서 업로드 대기중...</span>
                         </button>
                     </div>
@@ -151,16 +177,16 @@
                         <h3 class="font-bold text-slate-800 flex items-center gap-2">
                             <i data-lucide="clipboard-list" class="w-5 h-5 text-blue-600"></i> 프로젝트 통합 정보
                         </h3>
-                        <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-medium">자동 추출 및 수동 입력</span>
+                        <span class="text-xs bg-slate-100 text-slate-500 px-2.5 py-1.5 rounded-lg font-bold border border-slate-200">자동 추출 및 수동 입력 가능</span>
                     </div>
                     <form id="projectForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5"></form>
                 </div>
             </div>
             
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <button id="cancelModalBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200">취소</button>
-                <button id="saveProjectBtn" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i> 최종 등록하기
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
+                <button id="cancelModalBtn" class="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
+                <button id="saveProjectBtn" class="px-8 py-3 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all hover:-translate-y-0.5">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> 공용 DB에 등록
                 </button>
             </div>
         </div>
@@ -168,12 +194,12 @@
 
     <!-- 현장 수정 모달 -->
     <div id="editModal" class="modal fixed inset-0 bg-slate-900/60 z-[50] items-center justify-center p-4 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-blue-50">
                 <h2 class="text-lg font-bold flex items-center gap-2 text-blue-800">
                     <i data-lucide="pencil" class="text-blue-600"></i> 프로젝트 정보 수정
                 </h2>
-                <button id="closeEditBtn" class="text-blue-400 hover:text-blue-700 bg-white rounded-full p-1 border border-blue-200 hover:bg-blue-100">
+                <button id="closeEditBtn" class="text-blue-400 hover:text-blue-700 bg-white rounded-full p-1.5 border border-blue-200 hover:bg-blue-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -182,10 +208,10 @@
                 <form id="editProjectForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5"></form>
             </div>
             
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <button id="cancelEditBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200">취소</button>
-                <button id="saveEditBtn" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> 수정 사항 저장
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
+                <button id="cancelEditBtn" class="px-6 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
+                <button id="saveEditBtn" class="px-8 py-3 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center gap-2 transition-all hover:-translate-y-0.5">
+                    <i data-lucide="save" class="w-5 h-5"></i> 수정 사항 적용
                 </button>
             </div>
         </div>
@@ -193,29 +219,25 @@
 
     <!-- 삭제 확인 모달 -->
     <div id="confirmModal" class="modal fixed inset-0 bg-slate-900/60 z-[60] items-center justify-center p-4 backdrop-blur-sm hidden">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center text-center">
-            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        <div class="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl flex flex-col items-center text-center transform transition-all scale-100">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5 border-4 border-red-100">
+                <i data-lucide="trash-2" class="w-8 h-8"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">프로젝트 삭제</h3>
-            <p class="text-sm text-slate-500 mb-6">이 프로젝트를 정말 삭제하시겠습니까?</p>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">프로젝트 삭제</h3>
+            <p class="text-sm text-slate-500 mb-8 leading-relaxed">이 프로젝트를 공용 DB에서<br>정말 영구적으로 삭제하시겠습니까?</p>
             <div class="flex gap-3 w-full">
-                <button id="cancelConfirmBtn" class="flex-1 px-4 py-2.5 rounded-xl font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">취소</button>
-                <button id="okConfirmBtn" class="flex-1 px-4 py-2.5 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700">삭제하기</button>
+                <button id="cancelConfirmBtn" class="flex-1 px-4 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">취소</button>
+                <button id="okConfirmBtn" class="flex-1 px-4 py-3.5 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-colors">삭제하기</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // ⭐ 잘 작동하던 Gemini 2.5 Flash 버전으로 원상복구
-        // ==========================================
         const apiKey = "AIzaSyBBGQE_o7WRPvg6RlOttkXyNFkD8vbQnF0"; 
-        const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDL5m8zW1PF6Y_PBHGV7mM4NoquTmrt0RM",
@@ -230,12 +252,15 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider(); 
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
 
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-xl text-white font-bold shadow-xl z-[100] transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-slate-800'}`;
-            toast.textContent = message;
+            toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-2xl z-[300] transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-slate-800'} flex items-center gap-3`;
+            toast.innerHTML = `<i data-lucide="${isError ? 'alert-circle' : 'check-circle'}" class="w-5 h-5"></i> ${message}`;
             document.body.appendChild(toast);
+            lucide.createIcons();
             setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
         }
 
@@ -278,6 +303,12 @@
         let hideCompleted = savedHideCompleted !== null ? JSON.parse(savedHideCompleted) : true;
 
         const DOM = {
+            loginOverlay: document.getElementById('loginOverlay'),
+            googleLoginBtn: document.getElementById('googleLoginBtn'),
+            userInfo: document.getElementById('userInfo'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            userEmailDisplay: document.getElementById('userEmailDisplay'),
+
             viewOptionsBtn: document.getElementById('viewOptionsBtn'),
             viewOptionsDropdown: document.getElementById('viewOptionsDropdown'),
             hideCompletedToggle: document.getElementById('hideCompletedToggle'),
@@ -316,7 +347,7 @@
             groups.forEach(groupName => {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = "mb-4";
-                groupDiv.innerHTML = `<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 pb-1 border-b border-slate-100">${groupName}</div>`;
+                groupDiv.innerHTML = `<div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 pb-1 border-b border-slate-100">${groupName}</div>`;
                 
                 const gridDiv = document.createElement('div');
                 gridDiv.className = "grid grid-cols-2 gap-2";
@@ -326,8 +357,8 @@
                     const label = document.createElement('label');
                     label.className = "flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer transition-colors";
                     label.innerHTML = `
-                        <input type="checkbox" class="column-toggle w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${field.id}" ${isChecked ? 'checked' : ''}>
-                        <span class="text-xs font-medium text-slate-700 select-none truncate" title="${field.label}">${field.label}</span>
+                        <input type="checkbox" class="column-toggle w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" value="${field.id}" ${isChecked ? 'checked' : ''}>
+                        <span class="text-xs font-bold text-slate-700 select-none truncate" title="${field.label}">${field.label}</span>
                     `;
                     gridDiv.appendChild(label);
                 });
@@ -355,8 +386,8 @@
             const groups = [...new Set(ALL_FIELDS.map(f => f.group))];
             groups.forEach(groupName => {
                 const groupHeader = document.createElement('div');
-                groupHeader.className = "md:col-span-2 mt-4 first:mt-0 pb-2 border-b border-slate-200";
-                groupHeader.innerHTML = `<h4 class="font-bold text-slate-700 text-sm flex items-center gap-2"><div class="w-2 h-2 rounded-full ${isEdit ? 'bg-blue-500' : 'bg-slate-400'}"></div> ${groupName}</h4>`;
+                groupHeader.className = "md:col-span-2 mt-5 first:mt-0 pb-2 border-b border-slate-200";
+                groupHeader.innerHTML = `<h4 class="font-extrabold text-slate-700 text-sm flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full ${isEdit ? 'bg-blue-500' : 'bg-slate-400'}"></div> ${groupName}</h4>`;
                 container.appendChild(groupHeader);
 
                 ALL_FIELDS.filter(f => f.group === groupName).forEach(field => {
@@ -364,9 +395,9 @@
                     div.className = field.colSpan === 2 ? "md:col-span-2 space-y-1.5" : "space-y-1.5";
                     
                     div.innerHTML = `
-                        <label class="block text-xs font-bold text-slate-500 uppercase pl-1">${field.label}</label>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase pl-1">${field.label}</label>
                         <input type="text" id="${isEdit ? 'edit_' : 'input_'}${field.id}" placeholder="${field.label} 입력..." 
-                               class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-800 transition-all shadow-sm">
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-800 transition-all shadow-sm">
                     `;
                     container.appendChild(div);
                 });
@@ -396,7 +427,7 @@
                 if (!field) return;
 
                 const th = document.createElement('th');
-                th.className = "px-4 py-4 border-b border-slate-200 relative group truncate select-none";
+                th.className = "px-5 py-4 border-b border-slate-200 relative group truncate select-none";
                 th.style.width = columnWidths[colId] ? `${columnWidths[colId]}px` : '150px';
                 th.draggable = true;
                 th.innerHTML = `${field.label}<div class="resizer" data-id="${colId}"></div>`;
@@ -419,7 +450,7 @@
             });
 
             const actionTh = document.createElement('th');
-            actionTh.className = "px-4 py-4 w-24 text-center border-b border-slate-200";
+            actionTh.className = "px-4 py-4 w-28 text-center border-b border-slate-200";
             actionTh.textContent = "관리";
             DOM.tableHeaderRow.appendChild(actionTh);
 
@@ -436,7 +467,7 @@
                 DOM.tableLoading.classList.add('hidden');
                 DOM.tableEmpty.classList.remove('hidden');
                 DOM.emptyMessage.textContent = hideCompleted && projects.length > 0 
-                    ? "완료된 프로젝트가 숨겨져 있습니다." : "등록된 프로젝트가 없습니다.";
+                    ? "완료된 프로젝트가 모두 숨겨져 있습니다." : "등록된 프로젝트가 없습니다.";
                 return;
             }
 
@@ -445,21 +476,21 @@
 
             sortedProjects.forEach(project => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/50 transition-colors group";
+                tr.className = "hover:bg-blue-50/50 transition-colors group";
                 
                 visibleColumns.forEach(colId => {
                     const field = ALL_FIELDS.find(f => f.id === colId);
                     if (!field) return;
 
                     const td = document.createElement('td');
-                    td.className = "px-4 py-3 border-b border-slate-100 truncate";
+                    td.className = "px-5 py-3.5 border-b border-slate-100 truncate";
                     td.style.maxWidth = columnWidths[colId] ? `${columnWidths[colId]}px` : '150px';
                     
                     const value = project[colId];
                     if (value === "정보 없음") {
-                        td.innerHTML = `<span class="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded">정보 없음</span>`;
+                        td.innerHTML = `<span class="text-red-500 font-bold bg-red-50 px-2.5 py-1 rounded-md text-xs">정보 없음</span>`;
                     } else if (colId === 'projectName') {
-                        td.innerHTML = `<span class="font-bold text-slate-800">${value || '-'}</span>`;
+                        td.innerHTML = `<span class="font-extrabold text-slate-800 text-[15px]">${value || '-'}</span>`;
                     } else {
                         td.textContent = value || '-';
                     }
@@ -467,13 +498,13 @@
                 });
 
                 const actionTd = document.createElement('td');
-                actionTd.className = "px-4 py-3 border-b border-slate-100 text-center";
+                actionTd.className = "px-4 py-3.5 border-b border-slate-100 text-center";
                 actionTd.innerHTML = `
                     <div class="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.openEdit('${project.id}')" class="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors" title="수정">
+                        <button onclick="window.openEdit('${project.id}')" class="text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="수정">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="window.requestDelete('${project.id}')" class="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="삭제">
+                        <button onclick="window.requestDelete('${project.id}')" class="text-slate-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="삭제">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -517,9 +548,147 @@
             });
         }
 
-        /* ================= CRUD 로직 ================= */
-        let projectToDelete = null;
+        /* ================= 🔒 구글 로그인 및 화이트리스트(허용 권한) 로직 ================= */
 
+        DOM.googleLoginBtn.addEventListener('click', async () => {
+            try {
+                DOM.googleLoginBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 인증 중...`;
+                lucide.createIcons();
+                await signInWithPopup(auth, googleProvider);
+            } catch (err) {
+                console.error("Popup Error: ", err);
+                const banner = document.getElementById('criticalErrorBanner');
+                banner.classList.remove('hidden');
+                
+                if (err.code === 'auth/unauthorized-domain') {
+                    document.getElementById('criticalErrorTitle').innerHTML = "⚠️ 테스트 환경(미리보기)에서는 로그인이 제한됩니다!";
+                    document.getElementById('criticalErrorText').innerHTML = `
+                        현재 이 화면(미리보기 창)은 보안을 위해 Firebase 로그인이 차단되어 있습니다.<br>
+                        <strong>정상적인 테스트를 원하시면, 이 코드를 회원님의 깃허브에 업데이트하신 후,<br>
+                        <a href="https://hongstar2776-cmyk.github.io/" target="_blank" class="underline text-blue-700 font-bold">hongstar2776-cmyk.github.io</a> 에 접속해서 로그인해 보세요!</strong><br>
+                        (깃허브 주소는 이미 정상적으로 승인 처리되어 있으므로 오류 없이 접속됩니다.)
+                    `;
+                } else if(err.code !== 'auth/popup-closed-by-user') {
+                     showToast(`로그인 실패: ${err.message}`, true);
+                }
+                
+                DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
+            }
+        });
+
+
+        DOM.logoutBtn.addEventListener('click', () => {
+            if(confirm("정말 로그아웃 하시겠습니까?")) signOut(auth);
+        });
+
+        async function checkWhitelistAndProceed(user) {
+            const whitelistRef = doc(db, 'artifacts', customAppId, 'public', 'data', 'settings', 'whitelist');
+            try {
+                const snap = await getDoc(whitelistRef);
+                let allowedEmails = [];
+                
+                if (!snap.exists()) {
+                    allowedEmails = [user.email, "hongstar2776@gmail.com"];
+                    allowedEmails = [...new Set(allowedEmails)];
+                    await setDoc(whitelistRef, { emails: allowedEmails });
+                    console.log("초기 화이트리스트가 자동 생성되었습니다.");
+                } else {
+                    allowedEmails = snap.data().emails || [];
+                }
+
+                if (!allowedEmails.includes(user.email)) {
+                    showToast(`접근 거부: ${user.email} 계정은 등록되지 않은 팀원입니다.`, true);
+                    await signOut(auth);
+                    return false;
+                }
+
+                return true;
+            } catch (err) {
+                console.error("Whitelist check error:", err);
+                showToast("권한 확인 중 오류 발생. Firebase DB 규칙을 확인하세요.", true);
+                await signOut(auth);
+                return false;
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const isAllowed = await checkWhitelistAndProceed(user);
+                
+                if (isAllowed) {
+                    currentUser = user;
+                    DOM.loginOverlay.classList.add('hidden'); 
+                    DOM.userInfo.classList.remove('hidden');
+                    DOM.userInfo.classList.add('flex');
+                    DOM.userEmailDisplay.textContent = user.email; 
+                    
+                    showToast("대시보드에 성공적으로 접속했습니다.");
+                    subscribeData(); 
+                }
+            } else {
+                currentUser = null;
+                if(unsubscribeDb) unsubscribeDb();
+                
+                DOM.loginOverlay.classList.remove('hidden');
+                DOM.googleLoginBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="Google"> Google 계정으로 로그인`;
+                DOM.userInfo.classList.add('hidden');
+                DOM.userInfo.classList.remove('flex');
+            }
+        });
+
+
+        /* ================= 📡 공용 데이터베이스 (Public DB) 연동 로직 ================= */
+        function subscribeData() {
+            if (!currentUser) return;
+            DOM.tableLoading.classList.remove('hidden');
+            DOM.tableEmpty.classList.add('hidden');
+
+            const projectsRef = collection(db, 'artifacts', customAppId, 'public', 'data', 'projects');
+            unsubscribeDb = onSnapshot(projectsRef, (snapshot) => {
+                projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                DOM.tableLoading.classList.add('hidden');
+                renderTable();
+            }, (error) => { 
+                DOM.tableLoading.classList.add('hidden');
+                console.error("Firestore Listen Error:", error);
+                showToast(`DB 접속 에러: ${error.message}`, true);
+            });
+        }
+
+        DOM.saveProjectBtn.addEventListener('click', async () => {
+            if (!currentUser) return showToast("로그인 상태를 확인해주세요.", true);
+            
+            const newProject = { 
+                createdAt: Date.now(),
+                authorEmail: currentUser.email 
+            };
+            
+            const inputs = DOM.projectForm.querySelectorAll('input');
+            let hasData = false;
+            inputs.forEach(input => {
+                const id = input.id.replace('input_', '');
+                const val = input.value.trim();
+                newProject[id] = val;
+                if(val && val !== "정보 없음") hasData = true;
+            });
+
+            if (!hasData) return showToast("저장할 정보가 없습니다.", true);
+
+            DOM.saveProjectBtn.disabled = true;
+            DOM.saveProjectBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 동기화 중...`;
+
+            try {
+                await addDoc(collection(db, 'artifacts', customAppId, 'public', 'data', 'projects'), newProject);
+                toggleAddModal(false);
+                showToast("공용 데이터베이스에 저장되었습니다.");
+            } catch (err) { showToast(`저장 실패: ${err.message}`, true); } 
+            finally {
+                DOM.saveProjectBtn.disabled = false;
+                DOM.saveProjectBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> 공용 DB에 등록`;
+            }
+        });
+
+        let projectToDelete = null;
         window.requestDelete = (docId) => {
             projectToDelete = docId;
             document.getElementById('confirmModal').classList.add('active');
@@ -534,7 +703,7 @@
             document.getElementById('confirmModal').classList.remove('active');
             document.getElementById('confirmModal').classList.add('hidden');
             try {
-                await deleteDoc(doc(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects', projectToDelete));
+                await deleteDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', projectToDelete));
                 showToast("삭제되었습니다.");
             } catch (err) { showToast(`삭제 실패: ${err.message}`, true); }
         });
@@ -570,93 +739,29 @@
             });
 
             DOM.saveEditBtn.disabled = true;
-            DOM.saveEditBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 저장중...`;
+            DOM.saveEditBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 저장중...`;
             try {
-                await updateDoc(doc(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects', editingProjectId), updatedData);
+                await updateDoc(doc(db, 'artifacts', customAppId, 'public', 'data', 'projects', editingProjectId), updatedData);
                 showToast("성공적으로 수정되었습니다.");
                 closeEditModal();
             } catch (err) { showToast(`수정 실패: ${err.message}`, true); } 
             finally {
                 DOM.saveEditBtn.disabled = false;
-                DOM.saveEditBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> 수정 사항 저장`;
+                DOM.saveEditBtn.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> 수정 사항 적용`;
                 lucide.createIcons();
             }
         });
 
-        function subscribeData() {
-            if (!currentUser) return;
-            DOM.tableLoading.classList.remove('hidden');
-            DOM.tableEmpty.classList.add('hidden');
 
-            const projectsRef = collection(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects');
-            unsubscribeDb = onSnapshot(projectsRef, (snapshot) => {
-                projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                DOM.tableLoading.classList.add('hidden');
-                renderTable();
-            }, (error) => { 
-                DOM.tableLoading.classList.add('hidden');
-                console.error("Firestore Listen Error:", error);
-                if (error.code === 'permission-denied') {
-                    const banner = document.getElementById('criticalErrorBanner');
-                    banner.classList.remove('hidden');
-                    document.getElementById('criticalErrorTitle').innerHTML = "⚠️ Firestore 보안 규칙(접근 권한)이 차단되어 있습니다!";
-                    document.getElementById('criticalErrorText').innerHTML = `
-                        Firebase 콘솔 접속 > Firestore Database > <strong>규칙(Rules)</strong> 탭에서 코드를 다음과 같이 수정 후 게시(Publish)하세요.<br>
-                        <code class="block bg-red-100 p-2 mt-2 rounded text-red-800 font-mono text-xs">
-                        rules_version = '2';<br>
-                        service cloud.firestore {<br>
-                        &nbsp;&nbsp;match /databases/{database}/documents {<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if request.auth != null;<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-                        &nbsp;&nbsp;}<br>
-                        }
-                        </code>
-                    `;
-                } else {
-                    showToast(`DB 접속 에러: ${error.message}`, true);
-                }
-            });
-        }
-
-        async function initializeAuth() {
-            try {
-                let customTokenSuccess = false;
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try { await signInWithCustomToken(auth, __initial_auth_token); customTokenSuccess = true; } catch (e) {}
-                }
-                if (!customTokenSuccess) await signInAnonymously(auth);
-            } catch (e) {
-                console.error("Auth error:", e);
-                const banner = document.getElementById('criticalErrorBanner');
-                banner.classList.remove('hidden');
-                const textEl = document.getElementById('criticalErrorText');
-                
-                if (e.message.includes('domain') || e.code === 'auth/unauthorized-domain') {
-                    document.getElementById('criticalErrorTitle').innerHTML = "⚠️ 현재 도메인이 차단되었습니다 (GitHub Pages)";
-                    textEl.innerHTML = `
-                        현재 사용 중인 깃허브 주소가 Firebase에 등록되지 않았습니다.<br>
-                        1. Firebase 콘솔 > Authentication > 설정(Settings) > <strong>승인된 도메인(Authorized domains)</strong> 이동<br>
-                        2. <strong>도메인 추가</strong> 버튼을 눌러 현재 브라우저 주소창의 주소(예: <code>내이름.github.io</code>)를 추가하세요.
-                    `;
-                } else if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation' || e.code === 'auth/operation-not-allowed') {
-                    document.getElementById('criticalErrorTitle').innerHTML = "⚠️ 익명 로그인이 활성화되지 않았습니다.";
-                    textEl.innerHTML = `
-                        Firebase 프로젝트에서 익명 로그인이 꺼져있습니다.<br>
-                        1. Firebase 콘솔 이동 > Authentication > Sign-in method 탭<br>
-                        2. <strong>익명(Anonymous)</strong> 제공업체를 추가하고 '사용 설정' 후 저장하세요.
-                    `;
-                } else {
-                    textEl.innerHTML = `인증 실패: ${e.message}<br>Firebase 설정을 확인해주세요.`;
-                }
-            }
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) subscribeData();
-            else if(unsubscribeDb) unsubscribeDb();
-        });
+        /* ================= 🤖 AI 인식 (자동 우회-Fallback 시스템 탑재) ================= */
+        
+        let workingModel = null; 
+        const AI_MODELS_TO_TRY = [
+            "gemini-2.5-flash-preview-09-2025", 
+            "gemini-2.0-flash",                 
+            "gemini-1.5-flash",                 
+            "gemini-1.5-flash-latest"
+        ];
 
         function setupUploader(type) {
             const inputEl = document.getElementById(`fileInput${type}`);
@@ -689,7 +794,7 @@
                     btnEl.disabled = false;
                     btnEl.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
                     btnEl.classList.add(type === 'Contract' ? 'bg-blue-600' : 'bg-emerald-600', 'text-white', 'shadow-md');
-                    textEl.textContent = "AI로 분석하기";
+                    textEl.textContent = "AI 문서 분석 시작하기";
                 };
                 reader.readAsDataURL(file);
             });
@@ -698,7 +803,6 @@
         setupUploader('Contract');
         setupUploader('Overview');
 
-        // ⭐ 원래 잘 작동했던 gemini-2.5-flash-preview-09-2025 로 원상복구
         async function performScan(typeStr) {
             const typeKey = typeStr.toLowerCase();
             const { base64, mimeType } = filesData[typeKey];
@@ -709,8 +813,8 @@
             const isContract = typeKey === 'contract';
             
             btnEl.disabled = true;
-            btnEl.className = `w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-white ${isContract ? 'bg-blue-400' : 'bg-emerald-400'}`;
-            textEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block align-middle"></i> 분석 중...`;
+            btnEl.className = `w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-white ${isContract ? 'bg-blue-400' : 'bg-emerald-400'}`;
+            textEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block align-middle"></i> 최적의 AI 모델 탐색 및 분석 중...`;
             lucide.createIcons();
 
             try {
@@ -718,26 +822,48 @@
                     ? `계약서에서 추출: 키 값(영문): "projectName" (공사명), "contractAmount" (계약금액), "contractDate" (계약일), "startDate" (착공일), "endDate" (준공일), "clientName" (도급인/발주처), "clientCEO" (도급인 대표자), "contractorName" (수급인/시공사), "supplyValue" (공급가액), "vat" (부가가치세). 찾을 수 없으면 빈 문자열("").`
                     : `개요서에서 추출: 키 값(영문): "location" (대지위치/공사현장), "siteArea" (대지면적), "totalFloorArea" (연면적), "buildingArea" (건축면적), "maxHeight" (최고높이), "floors" (층수), "zone" (지역/지구), "mainPurpose" (주용도). 찾을 수 없으면 빈 문자열("").`;
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userPrompt }, { inlineData: { mimeType: mimeType || "application/pdf", data: base64 } }] }],
-                        systemInstruction: { parts: [{ text: "Valid JSON only. No markdown." }] },
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    console.error("API Error Details:", errData);
-                    throw new Error(errData.error?.message || "Google API 서버 에러");
-                }
+                let dataText = null;
+                let lastErrorMessage = "";
                 
-                const text = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
-                if(!text) throw new Error("추출된 데이터가 없습니다.");
+                const modelsToUse = workingModel ? [workingModel] : AI_MODELS_TO_TRY;
 
-                const data = JSON.parse(text);
+                for (const currentModel of modelsToUse) {
+                    try {
+                        console.log(`[AI 자동 탐색] ${currentModel} 모델 시도 중...`);
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: userPrompt }, { inlineData: { mimeType: mimeType || "application/pdf", data: base64 } }] }],
+                                systemInstruction: { parts: [{ text: "Valid JSON only. No markdown." }] },
+                                generationConfig: { responseMimeType: "application/json" }
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(`[${currentModel}] API 에러: ${errData.error?.message}`);
+                        }
+                        
+                        const jsonResult = await response.json();
+                        dataText = jsonResult.candidates?.[0]?.content?.parts?.[0]?.text;
+                        
+                        if(dataText) {
+                            workingModel = currentModel; 
+                            console.log(`🎉 성공! 앞으로 [${workingModel}] 모델을 사용합니다.`);
+                            break; 
+                        }
+                    } catch (e) {
+                        console.warn(e.message);
+                        lastErrorMessage = e.message;
+                    }
+                }
+
+                if(!dataText) {
+                    throw new Error(lastErrorMessage || "접근 가능한 AI 모델이 없습니다.");
+                }
+
+                const data = JSON.parse(dataText);
                 
                 ALL_FIELDS.forEach(field => {
                     const isTargetField = field.type === typeKey || (isContract && field.id === 'projectName') || (!isContract && field.id === 'location');
@@ -755,19 +881,18 @@
                     }
                 });
 
-                textEl.textContent = "추출 완료!";
-                btnEl.className = "w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-green-500 text-white";
+                textEl.textContent = "AI 추출 완료!";
+                btnEl.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-green-500 text-white shadow-md shadow-green-200";
             } catch (err) {
                 console.error(err);
                 textEl.textContent = "분석 실패 (다시 시도)";
-                btnEl.className = `w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-white ${isContract ? 'bg-blue-600' : 'bg-emerald-600'}`;
+                btnEl.className = `w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-white ${isContract ? 'bg-blue-600' : 'bg-emerald-600'}`;
                 btnEl.disabled = false;
                 showToast(`AI 분석 실패: ${err.message}`, true);
             }
         }
 
-        document.getElementById('scanBtnContract').addEventListener('click', () => performScan('Contract'));
-        document.getElementById('scanBtnOverview').addEventListener('click', () => performScan('Overview'));
+        /* ================= 기타 UI 제어 로직 ================= */
 
         function resetAddModal() {
             filesData = { contract: { base64: null, mimeType: null }, overview: { base64: null, mimeType: null } };
@@ -777,7 +902,7 @@
                 document.getElementById(`previewContainer${type}`).classList.add('hidden');
                 const btn = document.getElementById(`scanBtn${type}`);
                 btn.disabled = true;
-                btn.className = "w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed";
+                btn.className = "w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-200 text-slate-400 cursor-not-allowed";
                 document.getElementById(`scanBtnText${type}`).textContent = `${type === 'Contract' ? '계약서' : '개요서'} 업로드 대기중...`;
             });
             renderFullForm('projectForm', false);
@@ -803,40 +928,11 @@
             }
         });
 
-        DOM.saveProjectBtn.addEventListener('click', async () => {
-            if (!currentUser) return showToast("DB 연결 상태를 확인해주세요.", true);
-            const newProject = { createdAt: Date.now() };
-            
-            const inputs = DOM.projectForm.querySelectorAll('input');
-            let hasData = false;
-            inputs.forEach(input => {
-                const id = input.id.replace('input_', '');
-                const val = input.value.trim();
-                newProject[id] = val;
-                if(val && val !== "정보 없음") hasData = true;
-            });
-
-            if (!hasData) return showToast("저장할 정보가 없습니다.", true);
-
-            DOM.saveProjectBtn.disabled = true;
-            DOM.saveProjectBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 저장중...`;
-
-            try {
-                await addDoc(collection(db, 'artifacts', customAppId, 'users', currentUser.uid, 'projects'), newProject);
-                toggleAddModal(false);
-                showToast("저장되었습니다.");
-            } catch (err) { showToast(`저장 실패: ${err.message}`, true); } 
-            finally {
-                DOM.saveProjectBtn.disabled = false;
-                DOM.saveProjectBtn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> 최종 등록하기`;
-            }
-        });
-
         initDropdown();
         renderFullForm('projectForm', false);
         renderFullForm('editProjectForm', true);
         lucide.createIcons();
-        initializeAuth();
+
     </script>
 </body>
 </html>
