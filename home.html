@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 현황 대시보드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 커스텀 스크롤바 등 필요시 추가 */
+        body { font-family: 'Pretendard', sans-serif; }
+        .progress-bar-striped {
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+            background-size: 1rem 1rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <!-- 사용자가 준비한 커스텀 헤더가 들어갈 자리 -->
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-7xl mx-auto p-6">
+        
+        <!-- 로딩 표시기 -->
+        <div id="loading-spinner" class="flex flex-col items-center justify-center py-20 hidden">
+            <i data-lucide="loader-2" class="w-10 h-10 text-blue-500 animate-spin mb-4"></i>
+            <p class="text-slate-500">데이터를 불러오는 중입니다...</p>
+        </div>
+
+        <!-- 로그인 안내 (실제 DB 모드 & 비로그인 시) -->
+        <div id="auth-warning" class="bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center hidden">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">접근 권한이 필요합니다</h2>
+            <p class="text-slate-500 mb-6">허용된 사용자만 대시보드 데이터를 조회할 수 있습니다.<br>우측 상단의 로그인 버튼을 클릭해 주세요.</p>
+        </div>
+
+        <div id="dashboard-content" class="hidden space-y-6">
+            <!-- 요약 카드 (KPI) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 카드 1 -->
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="bg-blue-50 p-4 rounded-full text-blue-600">
+                        <i data-lucide="hard-hat" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium mb-1">진행 중인 프로젝트</p>
+                        <h3 class="text-2xl font-bold" id="kpi-active-count">0<span class="text-sm font-normal text-slate-500 ml-1">건</span></h3>
+                    </div>
+                </div>
+                <!-- 카드 2 -->
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="bg-emerald-50 p-4 rounded-full text-emerald-600">
+                        <i data-lucide="banknote" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium mb-1">진행 프로젝트 계약 총액</p>
+                        <h3 class="text-2xl font-bold" id="kpi-total-amount">0<span class="text-sm font-normal text-slate-500 ml-1">원</span></h3>
+                    </div>
+                </div>
+                <!-- 카드 3 -->
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="bg-rose-50 p-4 rounded-full text-rose-600">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium mb-1">준공 임박 (30일 이내)</p>
+                        <h3 class="text-2xl font-bold text-rose-600" id="kpi-nearing-count">0<span class="text-sm font-normal text-rose-400 ml-1">건</span></h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 진행 상황 리스트 -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="activity" class="w-5 h-5 text-blue-600"></i>
+                        현재 공사 진행 현황
+                    </h2>
+                    <span class="text-xs text-slate-500" id="current-date-display">기준일: -</span>
+                </div>
+                
+                <div class="p-6 space-y-8" id="project-list-container">
+                    <!-- 프로젝트 아이템들이 여기에 렌더링 됩니다. -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK (v11.6.1) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =========================================================================
+        // 🚀 [배포 스위치] GitHub 배포 시 아래 값을 true로 변경하세요!
+        // =========================================================================
+        const USE_REAL_DB = false;
+        // =========================================================================
+
+        // 화이트리스트 (허용된 이메일) - 필요시 추가
+        const ALLOWED_EMAILS = ["admin@example.com", "manager@example.com"]; 
+        const CHECK_WHITELIST = false; // 화이트리스트 검사 여부
+
+        // Firebase 설정 (제공해주신 설정)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL5m8zW1PF6Y_PBHGV7mM4NoquTmrt0RM",
+            authDomain: "project-list-21920.firebaseapp.com",
+            projectId: "project-list-21920",
+            storageBucket: "project-list-21920.firebasestorage.app",
+            messagingSenderId: "973863678039",
+            appId: "1:973863678039:web:3d41a45c845a27cb3ff312"
+        };
+        const customAppId = "project-list-21920";
+
+        // 임의 데이터 (Mock Data) - UI 테스트용
+        const mockData = [
+            {
+                id: "mock1", projectName: "강남역 복합문화공간 신축공사", location: "서울시 강남구 역삼동",
+                contractAmount: "15,000,000,000", startDate: "2025-05-01", endDate: "2026-10-31",
+                siteManager: "김철수 소장", contractorName: "(주)대한건설"
+            },
+            {
+                id: "mock2", projectName: "판교 제2테크노밸리 지식산업센터", location: "경기도 성남시 판교동",
+                contractAmount: "42,000,000,000", startDate: "2025-01-15", endDate: "2026-04-10", // 준공 임박 (26년 3월 기준)
+                siteManager: "이영희 소장", contractorName: "(주)대한건설"
+            },
+            {
+                id: "mock3", projectName: "부산 해운대 오션뷰 레지던스", location: "부산광역시 해운대구",
+                contractAmount: "28,500,000,000", startDate: "2026-02-01", endDate: "2027-12-31", // 방금 시작
+                siteManager: "박민준 소장", contractorName: "(주)대한건설"
+            },
+            {
+                id: "mock4", projectName: "종료된 과거 프로젝트 (표시안됨)", location: "과거시",
+                contractAmount: "10,000,000,000", startDate: "2023-01-01", endDate: "2024-12-31", // 이미 종료됨
+                siteManager: "정보 없음", contractorName: "정보 없음"
+            },
+            {
+                id: "mock5", projectName: "미래 착공 프로젝트 (표시안됨)", location: "미래시",
+                contractAmount: "5,000,000,000", startDate: "2026-12-01", endDate: "2028-12-31", // 아직 시작안함
+                siteManager: "정보 없음", contractorName: "정보 없음"
+            }
+        ];
+
+        // UI 요소
+        const modeBadge = document.getElementById('mode-badge');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userInfo = document.getElementById('user-info');
+        const userEmailSpan = document.getElementById('user-email');
+        const authWarning = document.getElementById('auth-warning');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const projectListContainer = document.getElementById('project-list-container');
+        
+        const kpiActiveCount = document.getElementById('kpi-active-count');
+        const kpiTotalAmount = document.getElementById('kpi-total-amount');
+        const kpiNearingCount = document.getElementById('kpi-nearing-count');
+        const currentDateDisplay = document.getElementById('current-date-display');
+
+        // 앱 초기화 로직
+        let app, auth, db;
+        if (USE_REAL_DB) {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            
+            if (modeBadge) {
+                modeBadge.className = "ml-4 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1";
+                modeBadge.innerHTML = `<i data-lucide="database" class="w-3 h-3"></i> 실시간 DB 연동 중`;
+            }
+            
+            // Auth 리스너
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    if (CHECK_WHITELIST && !ALLOWED_EMAILS.includes(user.email)) {
+                        alert("등록되지 않은 이메일입니다. 권한이 없습니다.");
+                        signOut(auth);
+                        return;
+                    }
+                    // 로그인 성공
+                    loginBtn?.classList.add('hidden');
+                    userInfo?.classList.remove('hidden');
+                    if (userEmailSpan) userEmailSpan.textContent = user.email;
+                    authWarning?.classList.add('hidden');
+                    fetchDataFromFirestore();
+                } else {
+                    // 로그아웃 상태
+                    loginBtn?.classList.remove('hidden');
+                    userInfo?.classList.add('hidden');
+                    dashboardContent?.classList.add('hidden');
+                    authWarning?.classList.remove('hidden');
+                }
+            });
+
+            loginBtn?.addEventListener('click', () => {
+                signInWithPopup(auth, new GoogleAuthProvider()).catch(err => console.error(err));
+            });
+            logoutBtn?.addEventListener('click', () => {
+                signOut(auth);
+            });
+
+        } else {
+            // Mock 모드 동작
+            loginBtn?.classList.add('hidden'); // 로그인 버튼 숨김
+            authWarning?.classList.add('hidden');
+            setTimeout(() => {
+                processAndRenderData(mockData);
+            }, 500); // 약간의 로딩 효과
+        }
+
+        // 아이콘 초기화 (초기)
+        lucide.createIcons();
+
+        // 날짜 포맷 함수 (YYYY-MM-DD 형식의 문자열 반환)
+        const today = new Date();
+        currentDateDisplay.textContent = `기준일: ${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+
+        // 문자열 숫자를 정수로 변환 ("15,000,000" -> 15000000)
+        function parseAmount(amountStr) {
+            if (!amountStr || amountStr === "정보 없음") return 0;
+            return parseInt(amountStr.replace(/,/g, ''), 10) || 0;
+        }
+
+        // 원화 포맷 (15000000 -> 15,000,000)
+        function formatCurrency(num) {
+            if(num >= 100000000) {
+                // 1억 이상일 경우 억 단위로 간략히 표시 (선택사항)
+                const uk = Math.floor(num / 100000000);
+                const man = Math.floor((num % 100000000) / 10000);
+                return `${uk}억 ${man > 0 ? man + '만' : ''}원`.trim();
+            }
+            return num.toLocaleString() + "원";
+        }
+
+        // Firestore에서 데이터 가져오기
+        async function fetchDataFromFirestore() {
+            loadingSpinner.classList.remove('hidden');
+            dashboardContent.classList.add('hidden');
+            try {
+                const projectsRef = collection(db, 'artifacts', customAppId, 'public', 'data', 'projects');
+                const snapshot = await getDocs(projectsRef);
+                const data = [];
+                snapshot.forEach(doc => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                processAndRenderData(data);
+            } catch (error) {
+                console.error("데이터 불러오기 실패:", error);
+                alert("데이터를 불러오는데 실패했습니다.");
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        // 데이터 필터링, 계산 및 화면 렌더링
+        function processAndRenderData(projects) {
+            let activeCount = 0;
+            let totalAmount = 0;
+            let nearingCount = 0;
+            const activeProjectsHtml = [];
+
+            // 시간 00:00:00으로 맞춘 오늘 날짜 (순수 날짜 비교용)
+            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+            projects.forEach(project => {
+                // 날짜 데이터가 없으면 패스
+                if (!project.startDate || project.startDate === "정보 없음" || 
+                    !project.endDate || project.endDate === "정보 없음") {
+                    return;
+                }
+
+                const startDate = new Date(project.startDate);
+                const endDate = new Date(project.endDate);
+
+                // 유효하지 않은 날짜 포맷 패스
+                if (isNaN(startDate) || isNaN(endDate)) return; 
+
+                // 1. 착공일 ~ 준공일 사이에 있는지 체크 (현재 진행중)
+                if (startDate <= todayDateOnly && todayDateOnly <= endDate) {
+                    activeCount++;
+                    totalAmount += parseAmount(project.contractAmount);
+
+                    // 2. 전체 진행 일수 및 현재 진행 일수 계산
+                    const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+                    const passedDays = (todayDateOnly - startDate) / (1000 * 60 * 60 * 24);
+                    
+                    // 진행률 (%)
+                    let progressPercent = (passedDays / totalDays) * 100;
+                    progressPercent = Math.max(0, Math.min(100, progressPercent)); // 0~100 사이 보정
+
+                    // 3. 준공 잔여 일수 (D-Day)
+                    const remainDays = Math.ceil((endDate - todayDateOnly) / (1000 * 60 * 60 * 24));
+                    
+                    let statusColor = "bg-blue-500";
+                    let ddayClass = "text-slate-600 bg-slate-100";
+                    
+                    if (remainDays <= 30) {
+                        nearingCount++;
+                        statusColor = "bg-rose-500 progress-bar-striped";
+                        ddayClass = "text-rose-700 bg-rose-100 font-bold animate-pulse";
+                    } else if (progressPercent > 80) {
+                        statusColor = "bg-amber-500";
+                    }
+
+                    // 금액 포맷팅 (안전장치)
+                    const displayAmount = project.contractAmount !== "정보 없음" 
+                                        ? formatCurrency(parseAmount(project.contractAmount)) 
+                                        : "정보 없음";
+
+                    // 리스트 아이템 HTML 생성
+                    activeProjectsHtml.push(`
+                        <div class="group border border-slate-100 rounded-lg p-5 hover:border-blue-200 hover:shadow-md transition-all bg-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-bold text-slate-800 text-lg group-hover:text-blue-600 transition-colors">${project.projectName}</h3>
+                                        <span class="px-2 py-1 rounded text-xs ${ddayClass}">
+                                            ${remainDays === 0 ? 'D-Day' : 'D-' + remainDays}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-4 text-sm text-slate-500">
+                                        <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${project.location || '정보 없음'}</span>
+                                        <span class="flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i> ${project.siteManager || '정보 없음'}</span>
+                                        <span class="flex items-center gap-1"><i data-lucide="coins" class="w-3.5 h-3.5"></i> ${displayAmount}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-black text-slate-800">${progressPercent.toFixed(1)}<span class="text-sm font-medium text-slate-500">%</span></p>
+                                </div>
+                            </div>
+
+                            <!-- 프로그레스 바 영역 -->
+                            <div class="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-2">
+                                <div class="absolute top-0 left-0 h-full rounded-full ${statusColor} transition-all duration-1000 ease-out" 
+                                     style="width: 0%;" data-target-width="${progressPercent}%"></div>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs text-slate-400 font-medium">
+                                <span>${project.startDate} (착공)</span>
+                                <span>${project.endDate} (준공)</span>
+                            </div>
+                        </div>
+                    `);
+                }
+            });
+
+            // 렌더링
+            kpiActiveCount.innerHTML = `${activeCount}<span class="text-sm font-normal text-slate-500 ml-1">건</span>`;
+            kpiTotalAmount.innerHTML = `${formatCurrency(totalAmount)}`;
+            kpiNearingCount.innerHTML = `${nearingCount}<span class="text-sm font-normal text-rose-400 ml-1">건</span>`;
+
+            if (activeProjectsHtml.length > 0) {
+                projectListContainer.innerHTML = activeProjectsHtml.join('');
+            } else {
+                projectListContainer.innerHTML = `
+                    <div class="text-center py-10 text-slate-500">
+                        <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                        현재 진행 중인 공사 프로젝트가 없습니다.
+                    </div>
+                `;
+            }
+
+            // 아이콘 새로고침
+            lucide.createIcons();
+
+            // 컨텐츠 표시
+            loadingSpinner.classList.add('hidden');
+            dashboardContent.classList.remove('hidden');
+
+            // 프로그레스 바 애니메이션 트리거
+            setTimeout(() => {
+                document.querySelectorAll('[data-target-width]').forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-target-width');
+                });
+            }, 100);
+        }
+
+    </script>
+</body>
+</html>
