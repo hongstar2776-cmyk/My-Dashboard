@@ -181,37 +181,12 @@
             background-color: #f0f2f5;
         }
 
-        /* 홈 화면 (초기 화면) */
-        #welcome-screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: #475569;
-        }
-
-        #welcome-screen h2 {
-            font-size: 2.2rem;
-            color: #1e293b;
-            margin-bottom: 15px;
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-
-        #welcome-screen p {
-            font-size: 1.1rem;
-            color: #64748b;
-        }
-
-        /* 웹페이지를 불러올 Iframe */
+        /* 웹페이지를 불러올 Iframe (이제 기본으로 보이도록 설정) */
         iframe {
             width: 100%;
             height: 100%;
             border: none;
-            display: none;
+            display: block;
         }
 
     </style>
@@ -297,27 +272,18 @@
 
     <!-- 하단 컨텐츠 영역 -->
     <main>
-        <!-- 처음 접속하거나 HOME을 눌렀을 때 보이는 화면 -->
-        <div id="welcome-screen">
-            <h2>건설 업무 관리 시스템</h2>
-            <p>상단 메뉴에 마우스를 올려 원하시는 항목을 선택해 주세요.</p>
-        </div>
-
-        <!-- 내부 링크들이 실제로 표시될 공간 -->
-        <iframe name="contentFrame" id="contentFrame" src=""></iframe>
+        <!-- 내부 링크들이 실제로 표시될 공간 (처음 접속 시 home.html을 기본으로 띄움) -->
+        <iframe name="contentFrame" id="contentFrame" src="https://hongstar2776-cmyk.github.io/My-Dashboard/home.html"></iframe>
     </main>
 
     <script>
-        // HOME 버튼 클릭 시 초기 화면으로 돌리는 함수
+        // HOME 버튼 클릭 시 home.html을 iframe에 다시 불러오는 함수
         function goHome() {
-            document.getElementById('welcome-screen').style.display = 'flex';
-            document.getElementById('contentFrame').style.display = 'none';
-            document.getElementById('contentFrame').src = ''; // iframe 내용 초기화
+            document.getElementById('contentFrame').src = 'https://hongstar2776-cmyk.github.io/My-Dashboard/home.html';
         }
 
-        // 내부 링크 클릭 시 iframe을 보여주는 함수
+        // 내부 링크 클릭 시 호출 (이전 호환성을 위해 남겨둠)
         function showIframe() {
-            document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('contentFrame').style.display = 'block';
         }
     </script>
